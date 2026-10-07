@@ -1,0 +1,354 @@
+[
+ {
+  "id": "f:rose",
+  "set": "fluent-emoji-flat",
+  "name": "rose",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:cherry-blossom",
+  "set": "fluent-emoji-flat",
+  "name": "cherry-blossom",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:hibiscus",
+  "set": "fluent-emoji-flat",
+  "name": "hibiscus",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:tulip",
+  "set": "fluent-emoji-flat",
+  "name": "tulip",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:blossom",
+  "set": "fluent-emoji-flat",
+  "name": "blossom",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:hyacinth",
+  "set": "fluent-emoji-flat",
+  "name": "hyacinth",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:lotus",
+  "set": "fluent-emoji-flat",
+  "name": "lotus",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:sunflower",
+  "set": "fluent-emoji-flat",
+  "name": "sunflower",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:white-flower",
+  "set": "fluent-emoji-flat",
+  "name": "white-flower",
+  "kind": "bloom",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:herb",
+  "set": "fluent-emoji-flat",
+  "name": "herb",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:leaf-fluttering-in-wind",
+  "set": "fluent-emoji-flat",
+  "name": "leaf-fluttering-in-wind",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:shamrock",
+  "set": "fluent-emoji-flat",
+  "name": "shamrock",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:four-leaf-clover",
+  "set": "fluent-emoji-flat",
+  "name": "four-leaf-clover",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:seedling",
+  "set": "fluent-emoji-flat",
+  "name": "seedling",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:fallen-leaf",
+  "set": "fluent-emoji-flat",
+  "name": "fallen-leaf",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:maple-leaf",
+  "set": "fluent-emoji-flat",
+  "name": "maple-leaf",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:mushroom",
+  "set": "fluent-emoji-flat",
+  "name": "mushroom",
+  "kind": "leaf",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:butterfly",
+  "set": "fluent-emoji-flat",
+  "name": "butterfly",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:lady-beetle",
+  "set": "fluent-emoji-flat",
+  "name": "lady-beetle",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:snail",
+  "set": "fluent-emoji-flat",
+  "name": "snail",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:bug",
+  "set": "fluent-emoji-flat",
+  "name": "bug",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:honeybee",
+  "set": "fluent-emoji-flat",
+  "name": "honeybee",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:beetle",
+  "set": "fluent-emoji-flat",
+  "name": "beetle",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "f:cricket",
+  "set": "fluent-emoji-flat",
+  "name": "cricket",
+  "kind": "critter",
+  "style": "flat",
+  "license": "MIT · Microsoft Fluent Emoji"
+ },
+ {
+  "id": "g:daisy",
+  "set": "game-icons",
+  "name": "daisy",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:rose",
+  "set": "game-icons",
+  "name": "rose",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:lotus-flower",
+  "set": "game-icons",
+  "name": "lotus-flower",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:sunflower",
+  "set": "game-icons",
+  "name": "sunflower",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:flower-twirl",
+  "set": "game-icons",
+  "name": "flower-twirl",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:vine-flower",
+  "set": "game-icons",
+  "name": "vine-flower",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:flowers",
+  "set": "game-icons",
+  "name": "flowers",
+  "kind": "bloom",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:fern",
+  "set": "game-icons",
+  "name": "fern",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:vine-leaf",
+  "set": "game-icons",
+  "name": "vine-leaf",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:oak-leaf",
+  "set": "game-icons",
+  "name": "oak-leaf",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:linden-leaf",
+  "set": "game-icons",
+  "name": "linden-leaf",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:leaf-swirl",
+  "set": "game-icons",
+  "name": "leaf-swirl",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:sprout",
+  "set": "game-icons",
+  "name": "sprout",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:curling-vines",
+  "set": "game-icons",
+  "name": "curling-vines",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:mushrooms",
+  "set": "game-icons",
+  "name": "mushrooms",
+  "kind": "leaf",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:dragonfly",
+  "set": "game-icons",
+  "name": "dragonfly",
+  "kind": "critter",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:caterpillar",
+  "set": "game-icons",
+  "name": "caterpillar",
+  "kind": "critter",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:ladybug",
+  "set": "game-icons",
+  "name": "ladybug",
+  "kind": "critter",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:bee",
+  "set": "game-icons",
+  "name": "bee",
+  "kind": "critter",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ },
+ {
+  "id": "g:snail",
+  "set": "game-icons",
+  "name": "snail",
+  "kind": "critter",
+  "style": "silhouette",
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+ }
+]

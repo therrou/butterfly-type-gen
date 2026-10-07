@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Performance Rules
+# Applies to: All project files
+# Description: Defines performance guidelines and best practices
+
+performance:
+    description: "Performance guidelines and best practices"
+    patterns:
+        - "**/*"
+    rules:
+        general:
+            - "Minimize bundle size"
+            - "Optimize images and assets"
+            - "Implement proper caching strategies"
+            - "Use code splitting and lazy loading"
+            - "Monitor and optimize Core Web Vitals"
+
+        nextjs:
+            - "Use Server Components by default"
+            - "Implement proper data fetching patterns"
+            - "Use static generation where possible"
+            - "Implement incremental static regeneration"
+            - "Use proper caching headers"
+            - "Optimize font loading"
+            - "Use proper image optimization"
+
+        react:
+            - "Minimize re-renders"
+            - "Use proper memoization"
+            - "Implement proper suspense boundaries"
+            - "Use proper event handling"
+            - "Optimize state management"
+            - "Use proper refs"
+            - "Implement proper error boundaries"
+
+        monitoring:
+            - "Monitor Core Web Vitals"
+            - "Track performance metrics"
+            - "Implement proper error tracking"
+            - "Use performance monitoring tools"
+            - "Regular performance audits"
+
+        optimization:
+            - "Optimize third-party scripts"
+            - "Implement proper resource hints"
+            - "Use proper caching strategies"
+            - "Optimize critical rendering path"
+            - "Implement proper code splitting"

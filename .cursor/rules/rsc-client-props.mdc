@@ -1,0 +1,13 @@
+# RSC Client Props Rules
+
+# Applies to: Server wrappers and "use client" components that receive CMS data
+
+# Description: Minimize RSC serialization at the Server/Client boundary
+
+rsc*client_props:
+description: "Minimize data passed from Server Components to Client Components"
+patterns: - "\**/\_.tsx"
+rules:
+mapper_per_module: - "Each module server wrapper maps Umbraco block props to only the fields its client component needs" - "Colocate single-use mappers as module.{name}.mapper.ts and module.{name}.types.ts next to the module (or page.{name}.\* for page-level mappers)" - "Keep only cross-cutting mappers in src/lib/umbraco/mappers/ (e.g. page-card, navigation-link)" - "Never spread full block props ({...props}) into a component whose name ends with Client" - "Client components must use narrow purpose-built prop types (Pick<>), not full generated Umbraco models"
+server_boundary: - "Do not pass IApiContentResponseModel, PageItem, or full PropertiesModel objects to use client components when only a subset is rendered" - "Prefer explicit named props over object spreads at the RSC boundary"
+deduplication: - "Do not pass both raw CMS data and a derived copy of the same data to the same client subtree"

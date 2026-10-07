@@ -1,0 +1,56 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# TypeScript Rules
+# Applies to: All TypeScript files (*.ts, *.tsx)
+# Description: Defines TypeScript coding standards and best practices
+
+typescript:
+    description: "TypeScript coding standards and best practices"
+    patterns:
+        - "**/*.ts"
+        - "**/*.tsx"
+    rules:
+        general:
+            - "Use TypeScript for all code"
+            - "Prefer types over interfaces"
+            - "Avoid enums; use const objects with 'as const'"
+            - "Use strict type checking"
+            - "Use satisfies operator for type validation"
+            - "Implement type predicates for type narrowing"
+            - "Use Record<K,T> instead of { [key: K]: T }"
+            - "Leverage utility types (Pick, Omit, Partial, Required)"
+            - "Use branded types for type-safe identifiers"
+            - "Never use the 'any' type"
+
+        component_props:
+            description: "Component props typing rules"
+            rules:
+                without_forward_ref: "use ComponentPropsWithoutRef<T>"
+                with_forward_ref: "use ComponentPropsWithRef<T>"
+                with_children: "use PropsWithChildren<T>"
+
+        syntax_and_formatting:
+            - "Write concise, technical TypeScript code"
+            - "Use functional and declarative programming patterns"
+            - "Avoid code duplication through modularization"
+            - "Structure files: exports, subcomponents, helpers, types"
+            - "Use arrow function syntax for pure functions"
+            - "Use nullish coalescing (??) instead of ||"
+            - "Use optional chaining (?.)"
+            - "Use template literals over string concatenation"
+            - "Respect existing formatting and linting rules"
+
+        data_management:
+            - "Use 'nuqs' for URL search parameters"
+            - "Implement proper caching"
+            - "Handle loading states"
+            - "Type all API responses"
+            - "Follow Next.js data fetching patterns"
+
+        umbraco_integration:
+            - "Define content types based on Umbraco models"
+            - "Implement proper typing"
+            - "Handle content delivery efficiently"

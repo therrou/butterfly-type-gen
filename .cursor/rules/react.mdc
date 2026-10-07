@@ -1,0 +1,50 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# React Rules
+# Applies to: All React components (*.tsx)
+# Description: Defines React patterns and best practices
+
+react:
+    description: "React patterns and best practices"
+    patterns:
+        - "**/*.tsx"
+    rules:
+        component_patterns:
+            - "Use Server Components by default"
+            - "Add 'use client' only when needed"
+            - "Never import the global React namespace"
+            - "Use functional components with TypeScript types"
+            - "Avoid unnecessary state"
+            - "Use declarative patterns"
+            - "Use early returns to reduce nesting"
+            - "Implement proper error boundaries with typed error handling"
+            - "Use discriminated unions for complex state management"
+
+        performance:
+            - "Minimize 'use client', 'useEffect', and 'setState'"
+            - "Favor React Server Components (RSC)"
+            - "Implement proper image optimization with next/image"
+            - "Use dynamic imports for large components"
+            - "Wrap client components in Suspense"
+            - "Monitor Core Web Vitals (LCP, CLS, FID)"
+            - "Use React.memo() sparingly and only after profiling"
+            - "Leverage Next.js streaming for large data sets"
+            - "Use fetchCache for appropriate caching strategies"
+            - "Implement proper revalidation strategies"
+
+        hooks:
+            description: "Custom hooks organization"
+            structure:
+                - "Each hook in its own directory"
+                - "Colocate related files"
+                - "Use TypeScript for all hooks"
+            naming:
+                - "Use 'use' prefix for all hooks"
+                - "Use descriptive names with auxiliary verbs"
+                - "Include types file for each hook"
+            examples:
+                - "/hooks/use-auth/use-auth.ts"
+                - "/hooks/use-form/use-form.ts"

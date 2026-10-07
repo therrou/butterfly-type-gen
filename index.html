@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Butterfly Type</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body data-mode="type" data-engine="3d">
+  <!-- ============ TYPE MODE ============ -->
+  <section id="typeView">
+    <canvas id="tbg"></canvas>
+    <div id="tHost" class="host"></div>
+    <p class="hint" id="hint">Start typing</p>
+    <input id="typeInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Type to grow the garden" />
+  </section>
+
+  <!-- ============ POSTER MODE ============ -->
+  <section id="posterView">
+    <aside class="panel" id="panel">
+      <button class="sheetHandle" id="sheetHandle" aria-expanded="false"><span>Edit poster</span><b id="sheetMeta">A3 · Typed</b></button>
+      <div class="phead">
+        <div class="ptitle">Poster <button class="pill icon" id="posterClose" aria-label="Close poster">✕</button></div>
+        <div class="muted" id="pmeta">A3 · 297 × 420 mm · 300 dpi</div>
+      </div>
+
+      <div class="group">
+        <div class="label">Words</div>
+        <input id="pWords" class="field big" spellcheck="false" maxlength="40" />
+        <button class="pill" id="pRegrow">Regrow garden</button>
+      </div>
+
+      <div class="group">
+        <div class="label">Headline</div>
+        <textarea id="pHead" class="field" rows="2" spellcheck="false"></textarea>
+        <input id="pSub" class="field" spellcheck="false" placeholder="Subline (optional)" />
+      </div>
+
+      <div class="group">
+        <div class="label">Motion <span class="muted">· preview only</span></div>
+        <div class="grid2" id="pMotions"></div>
+        <label class="row" id="pSpeedRow">Typing speed <input type="range" id="pSpeed" min="0.4" max="3" step="0.1" /><output id="pSpeedOut">1.0×</output></label>
+        <div class="scrub">
+          <button class="pill icon" id="pPlay" aria-label="Play / pause">❚❚</button>
+          <input type="range" id="pFrame" min="0" max="1000" value="500" />
+          <output id="pFrameOut">2.0s</output>
+        </div>
+        <div class="muted small">Pause and scrub to choose the moment that gets printed.</div>
+      </div>
+
+      <div class="group">
+        <div class="label">Palette</div>
+        <div class="grid2" id="pPalette"></div>
+      </div>
+
+      <details class="group" id="bgGroup">
+        <summary class="label">Background · gradient blobs</summary>
+        <label class="row">Blobs <input type="range" id="bgCount" min="0" max="7" step="1" /></label>
+        <label class="row">Softness <input type="range" id="bgSoft" min="0.2" max="1" step="0.01" /></label>
+        <label class="row">Scale <input type="range" id="bgScale" min="0.5" max="1.6" step="0.01" /></label>
+        <label class="row">Grain <input type="range" id="bgGrain" min="0" max="1" step="0.01" /></label>
+        <label class="row check"><input type="checkbox" id="bgDrift" /> Drift in preview</label>
+        <div class="btns"><button class="pill" id="bgSeed">Re-roll blobs</button><button class="pill" id="bgReset">Reset positions</button></div>
+        <div class="muted small">Drag the rings on the poster to move blobs.</div>
+      </details>
+
+      <details class="group" open>
+        <summary class="label">Layout</summary>
+        <div class="seg" id="pFormat"><button data-v="A4">A4</button><button data-v="A3">A3</button><button data-v="A2">A2</button></div>
+        <label class="row check"><input type="checkbox" id="pBleed" /> 3 mm bleed</label>
+        <label class="row">Art scale <input type="range" id="pArtScale" min="0.5" max="1.4" step="0.01" /></label>
+        <label class="row">Art position <input type="range" id="pArtY" min="-1" max="1" step="0.01" /></label>
+      </details>
+
+      <div class="group export">
+        <div class="label" id="pExpLabel">Export · A3 print</div>
+        <button class="primary" id="pPNG">Export PNG · 300 dpi</button>
+        <button class="pill wide" id="pSVG">Export SVG (2D engine)</button>
+        <div class="muted small" id="pStatus"></div>
+      </div>
+    </aside>
+    <main class="pstage" id="pstage">
+      <div class="sheet" id="sheet">
+        <canvas id="pbg"></canvas>
+        <div id="pHost" class="host"></div>
+        <canvas id="pover"></canvas>
+      </div>
+    </main>
+  </section>
+
+  <!-- ============ DOCK ============ -->
+  <header class="dock">
+    <button class="pill" id="dockClose" aria-label="Back to the garden">✕ Close</button>
+    <div class="seg" id="engineSeg"><button data-v="2d" title="Illustrated (canvas, SVG export)">2D</button><button data-v="3d" title="Overgrown (WebGL)">3D</button></div>
+    <div class="chips" id="recipeChips"></div>
+    <div class="pop">
+      <button class="pill" id="weightBtn">Bold</button>
+      <div class="menu" id="weightMenu" hidden></div>
+    </div>
+    <div class="swatches" id="cwSwatches"></div>
+    <button class="pill" id="catBtn">Catalogue</button>
+    <button class="pill" id="randBtn" title="Pick one random bloom, leaf and critter">🎲 Randomize</button>
+    <div class="pop">
+      <button class="pill icon" id="setBtn" aria-label="Settings">⚙</button>
+      <div class="menu wide" id="setMenu" hidden>
+        <label class="row">Density <input type="range" id="sDensity" min="0.3" max="1.8" step="0.05" /></label>
+        <label class="row">Butterflies <input type="range" id="sFlies" min="0" max="12" step="1" /><output id="sFliesOut"></output></label>
+        <label class="row only3d check"><input type="checkbox" id="sForm" /> Letters form from particles</label>
+        <label class="row only3d">Formation <input type="range" id="sFormDur" min="0.5" max="3" step="0.1" /></label>
+        <div class="row only3d">Letter reveal <div class="seg" id="sReveal"><button data-v="dissolve">Particles → letter</button><button data-v="pop">Pop</button></div></div>
+        <label class="row only3d">Wind <input type="range" id="sWind" min="0" max="1.5" step="0.05" /></label>
+        <label class="row only3d">Petals <input type="range" id="sPetals" min="0" max="2" step="0.05" /></label>
+        <label class="row only3d">Pollen <input type="range" id="sSpores" min="0" max="2" step="0.05" /></label>
+        <label class="row only3d">Tilt-shift <input type="range" id="sTilt" min="0" max="2" step="0.05" /></label>
+        <label class="row only2d check"><input type="checkbox" id="sBoil" /> Hand-drawn boil</label>
+      </div>
+    </div>
+    <button class="pill icon" id="reseedBtn" title="Regrow with new seeds">↻</button>
+    <button class="primary cta" id="posterBtn">Make a poster</button>
+  </header>
+
+  <!-- ============ CATALOGUE ============ -->
+  <aside class="drawer" id="drawer" hidden>
+    <div class="dhead"><div class="ptitle">Catalogue</div><button class="pill icon" id="drawerClose">✕</button></div>
+    <p class="muted small" id="drawerFor"></p>
+    <div id="catalogue"></div>
+    <div class="btns"><button class="pill" id="catRandom">🎲 Randomize</button><button class="pill" id="catReset">Recipe defaults</button><button class="pill" id="catAll">Select all</button><button class="pill" id="catNone">None</button></div>
+    <p class="muted small credits">Species art: Microsoft Fluent Emoji (MIT) · game-icons.net by Lorc, Delapouite et al. (CC BY 3.0). Butterflies from the Small Steps film. Type growth after Type Garden by Akshat Agarwal.</p>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+  <div class="loading" id="loading">Growing…</div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

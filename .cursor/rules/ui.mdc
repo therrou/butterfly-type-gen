@@ -1,0 +1,150 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# UI and Accessibility Rules
+# Applies to: All UI components and styles
+# Description: Defines UI, styling, and accessibility standards
+
+ui:
+    description: "UI, styling, and accessibility standards"
+    patterns:
+        - "**/*.tsx"
+        - "**/*.css"
+        - "**/*.scss"
+    rules:
+        styling:
+            - "Use Shadcn UI for components"
+            - "Implement Tailwind CSS"
+            - "Follow mobile-first approach"
+            - "Use CSS variables for theming"
+            - "Maintain consistent spacing"
+            - "Follow responsive design patterns"
+
+        interactive_elements:
+            description: "WCAG AA requirements for interactive elements"
+            states:
+                - "All interactive elements must have distinct hover and active states"
+                - "Active states must be visually different from hover states"
+                - "State changes must be immediate and clear"
+                - "States must maintain WCAG AA contrast ratios"
+                - "States must be visible in both light and dark modes"
+                - "States must work with keyboard navigation"
+                - "States must be visible with reduced motion"
+                - "States must be visible with high contrast mode"
+                - "States must be visible with different zoom levels"
+                - "States must be visible with different viewport sizes"
+            button_specific:
+                - "Primary buttons must have distinct hover and active states"
+                - "Secondary buttons must have distinct hover and active states"
+                - "Tertiary buttons must have distinct hover and active states"
+                - "Text buttons must have distinct hover and active states"
+                - "Icon-only buttons must have distinct hover and active states"
+                - "Disabled states must be clearly visible"
+                - "Loading states must be clearly visible"
+                - "Focus states must be clearly visible"
+                - "Error states must be clearly visible"
+                - "Success states must be clearly visible"
+
+        accessibility:
+            description: "WCAG AA Compliance requirements"
+            perceivable:
+                - "Provide text alternatives for non-text content"
+                - "Ensure content is adaptable and distinguishable"
+                - "Make multimedia content accessible"
+                - "Use semantic HTML elements"
+                - "Provide alt text for all images"
+                - "Use ARIA labels when needed"
+                - "Ensure sufficient color contrast (WCAG AA)"
+                - "Support text resizing up to 200%"
+                - "Provide captions for videos"
+                - "Use proper heading hierarchy (h1-h6)"
+            operable:
+                - "Ensure keyboard accessibility"
+                - "Provide sufficient time to read content"
+                - "Prevent seizures and physical reactions"
+                - "Ensure navigable content"
+                - "Implement skip links"
+                - "Use focus indicators"
+                - "Support keyboard navigation"
+                - "Avoid keyboard traps"
+                - "Provide clear focus order"
+                - "Support screen reader navigation"
+            understandable:
+                - "Make text readable and understandable"
+                - "Make web pages appear and operate predictably"
+                - "Help users avoid and correct mistakes"
+                - "Use clear and consistent language"
+                - "Provide error messages and suggestions"
+                - "Use consistent navigation patterns"
+                - "Implement proper form validation"
+                - "Provide clear instructions"
+                - "Use proper language attributes"
+                - "Support multiple languages"
+            robust:
+                - "Ensure compatibility with current and future tools"
+                - "Support assistive technologies"
+                - "Use valid HTML"
+                - "Implement proper ARIA attributes"
+                - "Support screen readers"
+                - "Use semantic markup"
+                - "Implement proper roles"
+                - "Support dynamic content updates"
+                - "Handle focus management"
+                - "Support keyboard shortcuts"
+
+        testing:
+            description: "Accessibility testing requirements"
+            automated:
+                - "axe DevTools"
+                - "Lighthouse"
+                - "WAVE"
+                - "Pa11y"
+                - "jest-axe"
+            manual:
+                - "Screen readers (NVDA, VoiceOver)"
+                - "Keyboard navigation"
+                - "High contrast mode"
+                - "Different zoom levels"
+                - "Different viewport sizes"
+                - "Different browsers"
+                - "Different devices"
+            documentation:
+                - "Document accessibility features"
+                - "Include accessibility in code reviews"
+                - "Maintain accessibility testing reports"
+                - "Document keyboard shortcuts"
+                - "Document ARIA usage"
+                - "Document focus management"
+                - "Document screen reader support"
+                - "Document color contrast ratios"
+                - "Document responsive behavior"
+                - "Document error handling"
+
+        component_specific:
+            description: "Component-specific accessibility requirements"
+            forms:
+                - "Use proper form labels"
+                - "Implement error messages"
+                - "Support keyboard navigation"
+                - "Use proper input types"
+                - "Provide clear validation feedback"
+            navigation:
+                - "Implement skip links"
+                - "Use proper ARIA landmarks"
+                - "Support keyboard navigation"
+                - "Provide clear focus indicators"
+                - "Use proper heading structure"
+            modals:
+                - "Trap focus within modal"
+                - "Close on escape key"
+                - "Return focus to trigger"
+                - "Use proper ARIA attributes"
+                - "Provide clear close button"
+            images:
+                - "Provide alt text"
+                - "Support lazy loading"
+                - "Handle loading states"
+                - "Support responsive images"
+                - "Provide proper aspect ratios"

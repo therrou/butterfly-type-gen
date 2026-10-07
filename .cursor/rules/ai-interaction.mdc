@@ -1,0 +1,208 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# AI Interaction Rules
+# Applies to: All AI interactions
+# Description: Defines rules for AI assistance to ensure accurate and contextual responses
+
+ai_interaction:
+    description: "Rules for AI assistance to ensure accurate and contextual responses"
+    patterns:
+        - "**/*"
+    rules:
+        rules_processing:
+            initial_analysis:
+                - "Start every response by identifying all relevant rule files"
+                - "List which specific rules from each file apply to the current task"
+                - "Explain how each rule affects the proposed solution"
+            continuous_validation:
+                - "Check each step of the solution against applicable rules"
+                - "Flag any potential rule violations before proceeding"
+                - "Propose alternatives that better align with rules when needed"
+            rule_conflicts:
+                - "Identify when rules from different files conflict"
+                - "Explain the conflict and propose resolution strategy"
+                - "Prioritize rules based on specificity and scope"
+            rule_documentation:
+                - "Document which rules were considered in the solution"
+                - "Explain any rule exceptions or accommodations made"
+                - "Track rule compliance throughout the implementation"
+
+        general_rules:
+            dependency_analysis:
+                - "Before proposing changes, identify all files, functions, and components that depend on the code being modified"
+                - "Document dependencies thoroughly, including specific usage of functions or logic"
+                - "Consider both direct and indirect dependencies"
+                - "Check all rule files for additional dependency requirements"
+            working_code_preservation:
+                - "Always ask for explicit approval before modifying working code"
+                - "Propose changes as suggestions first, waiting for user confirmation"
+                - "Avoid making unrelated changes without explicit permission"
+                - "When changes affect working code, provide clear justification and impact analysis"
+                - "Preserve existing functionality unless explicitly instructed otherwise"
+                - "Suggest improvements separately from required changes"
+            flow_analysis:
+                - "Conduct complete end-to-end flow analysis from entry point to execution"
+                - "Track data and logic flow throughout all components"
+                - "Understand the full scope of changes"
+                - "Consider impact on all affected rule domains"
+            simulation_analysis:
+                - "Simulate user interactions and behaviors"
+                - "Perform dry runs and trace calls"
+                - "Analyze impact on expected and edge-case scenarios"
+                - "Verify compliance with all applicable rules"
+            simulation_validation:
+                - "Verify all existing functionality is preserved"
+                - "Provide fixes immediately if simulation breaks"
+                - "Ensure no regressions in existing features"
+                - "Validate against all rule requirements"
+            architecture_preservation:
+                - "Ensure new code integrates seamlessly with existing structure"
+                - "Maintain existing code organization"
+                - "Follow established architectural patterns"
+                - "Adhere to all architectural rules"
+            change_scope:
+                - "Limit changes to directly modified function and immediate dependencies"
+                - "Avoid unrelated modifications in other files"
+                - "Focus on specific task requirements"
+                - "Consider scope impact across all rule domains"
+            dependency_preservation:
+                - "Never modify existing dependencies unless explicitly required"
+                - "Add alternative code pathways when possible"
+                - "Thoroughly explain impact of dependency changes"
+                - "Check dependency rules in all relevant files"
+            style_preservation:
+                - "Adhere strictly to existing coding style"
+                - "Maintain consistent formatting"
+                - "Follow established naming conventions"
+                - "Apply style rules from all relevant files"
+
+        context_awareness:
+            project_specifics:
+                - "Always consider Next.js 15.2.3 App Router architecture"
+                - "Consider React 19.0.0 features and limitations"
+                - "Use TypeScript 5.7.2 strict mode patterns"
+                - "Follow Shadcn UI component patterns"
+                - "Consider Radix UI primitive components"
+                - "Use Tailwind 4.0.14 utility patterns"
+                - "Consider React Query 5.59.0 patterns"
+                - "Follow project's module- and page- naming conventions"
+                - "Consider project's specific directory structure"
+                - "Use project's specific component organization"
+
+            code_generation:
+                - "Generate code following project's TypeScript strict mode"
+                - "Use proper type definitions and interfaces"
+                - "Follow project's component naming conventions"
+                - "Include proper error handling"
+                - "Include proper loading states"
+                - "Use proper data fetching patterns"
+                - "Include proper accessibility attributes"
+                - "Use proper styling patterns"
+                - "Include proper test files"
+                - "Follow project's file organization"
+
+            component_patterns:
+                - "Use Server Components by default"
+                - "Add 'use client' only when needed"
+                - "Follow module- and page- component patterns"
+                - "Use proper component composition"
+                - "Include proper type definitions"
+                - "Use proper prop types"
+                - "Include proper error boundaries"
+                - "Use proper loading states"
+                - "Include proper accessibility"
+                - "Follow project's styling patterns"
+
+        ai_reasoning:
+            pre_change_checklist:
+                - "Complete all required analyses before providing solutions"
+                - "Verify simulation validation passes"
+                - "Request clarification when needed"
+            step_by_step_reasoning:
+                - "Explain each step before coding"
+                - "Break down actions into clear steps"
+                - "Provide rationale for each decision"
+            structured_proposals:
+                - "Clearly explain what, why, impact, and tradeoffs"
+                - "Evaluate possible side effects"
+                - "Provide clear implementation plan"
+
+        testing:
+            dependency_based_testing:
+                - "Test changed code and related dependencies"
+                - "Verify all affected components"
+                - "Check integration points"
+            no_breakage_assertion:
+                - "Run tests before proposing code"
+                - "Verify no regressions"
+                - "Ensure existing functionality works"
+            incremental_rollouts:
+                - "Make small, testable changes"
+                - "Test after each step"
+                - "Maintain working state throughout"
+
+        response_guidelines:
+            accuracy:
+                - "Always verify versions match package.json"
+                - "Check for compatibility between dependencies"
+                - "Consider project's specific requirements"
+                - "Verify against existing code patterns"
+                - "Ensure consistency with project structure"
+                - "Check for proper type safety"
+                - "Verify accessibility compliance"
+                - "Ensure proper error handling"
+                - "Check for proper loading states"
+                - "Verify proper data fetching patterns"
+
+            context:
+                - "Consider project's architecture"
+                - "Consider project's dependencies"
+                - "Consider project's conventions"
+                - "Consider project's patterns"
+                - "Consider project's structure"
+                - "Consider project's requirements"
+                - "Consider project's limitations"
+                - "Consider project's goals"
+                - "Consider project's constraints"
+                - "Consider project's context"
+
+            suggestions:
+                - "Suggest improvements based on project's tech stack"
+                - "Suggest optimizations based on project's patterns"
+                - "Suggest best practices based on project's context"
+                - "Suggest alternatives based on project's requirements"
+                - "Suggest improvements based on project's goals"
+                - "Suggest optimizations based on project's constraints"
+                - "Suggest best practices based on project's limitations"
+                - "Suggest alternatives based on project's context"
+                - "Suggest improvements based on project's patterns"
+                - "Suggest optimizations based on project's structure"
+
+        documentation:
+            - "Include proper type definitions"
+            - "Include proper component documentation"
+            - "Include proper function documentation"
+            - "Include proper usage examples"
+            - "Include proper error handling"
+            - "Include proper loading states"
+            - "Include proper accessibility"
+            - "Include proper testing"
+            - "Include proper examples"
+            - "Include proper context"
+
+        communication:
+            - "Be clear and concise"
+            - "Provide proper context"
+            - "Explain technical decisions"
+            - "Provide proper examples"
+            - "Include proper references"
+            - "Explain complex concepts"
+            - "Provide proper alternatives"
+            - "Include proper warnings"
+            - "Provide proper guidance"
+            - "Include proper next steps"
+

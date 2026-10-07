@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Code Style Rules
+# Applies to: All project files
+# Description: Defines coding style and naming conventions
+
+code_style:
+    description: "Coding style and naming conventions"
+    patterns:
+        - "**/*"
+    rules:
+        naming_conventions:
+            directories:
+                - "Use lowercase with dashes for directories"
+                - "Example: /text-field"
+            files:
+                - "Use lowercase with dashes for files"
+                - "Example: text-field.tsx"
+            components:
+                pages:
+                    - "Prefix with 'page-'"
+                    - "Example: page-home.tsx"
+                modules:
+                    - "Prefix with 'module-'"
+                    - "Example: module-header.tsx"
+            variables:
+                - "Use descriptive names with auxiliary verbs"
+                - "Example: isLoading, hasError"
+            exports:
+                - "Favor named exports for components"
+
+        component_organization:
+            structure:
+                - "Each component in its own directory"
+                - "Do not use index.ts files as barrel files"
+                - "Colocate related files"
+            file_organization:
+                - "component-name.tsx"
+                - "component-name.types.ts"
+                - "component-name.test.tsx"
+
+        formatting:
+            - "Use consistent indentation"
+            - "Use meaningful whitespace"
+            - "Keep lines under 100 characters"
+            - "Use semicolons"
+            - "Use double quotes for strings"
+            - "Use single quotes for imports"
+            - "Use trailing commas in multiline"
+            - "Use parentheses for arrow function parameters"
+            - "Use curly braces for all control statements"

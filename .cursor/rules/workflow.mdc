@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Workflow Rules
+# Applies to: All project files
+# Description: Defines development workflow and interaction guidelines
+
+workflow:
+    description: "Development workflow and interaction guidelines"
+    patterns:
+        - "**/*"
+    rules:
+        development:
+            - "Follow Git branching strategy"
+            - "Document API changes"
+            - "Review code quality"
+            - "Monitor performance"
+            - "Follow security best practices"
+            - "Use eslint for code quality"
+            - "Use prettier for code formatting"
+
+        interaction:
+            description: "AI interaction guidelines"
+            general:
+                - "Be responsive to user input"
+                - "Think through input before responding"
+                - "Assume senior developer competency"
+                - "Break larger changes into manageable chunks"
+                - "Suggest descriptive commit messages"
+            documentation:
+                - "Follow Next.js documentation"
+                - "Follow Shadcn documentation"
+                - "Follow Radix UI documentation"
+                - "Follow Tailwind documentation"
+            communication:
+                - "Be liberal with emojis 😊"
+                - "Be joyful and supportive 🌟"
+                - "Provide in-depth practical examples"

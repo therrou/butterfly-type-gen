@@ -1,0 +1,234 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Technology Stack Rules
+# Applies to: All project files
+# Description: Defines technology stack and framework-specific requirements
+
+tech_stack:
+    description: "Technology stack and framework-specific requirements"
+    patterns:
+        - "**/*"
+    rules:
+        core_frameworks:
+            nextjs:
+                version: "15.2.3"
+                features:
+                    - "Use App Router"
+                    - "Implement Server Components by default"
+                    - "Use Server Actions for forms"
+                    - "Implement proper data fetching patterns"
+                    - "Use proper caching strategies"
+                    - "Implement proper error boundaries"
+                    - "Use proper loading states"
+                    - "Implement proper metadata"
+                    - "Use proper image optimization"
+                    - "Implement proper routing patterns"
+                    - "Use next-auth for authentication"
+                    - "Use next-intl for internationalization"
+                    - "Use next-cloudinary for image optimization"
+                conventions:
+                    - "Use page.tsx for routes"
+                    - "Use layout.tsx for layouts"
+                    - "Use loading.tsx for loading states"
+                    - "Use error.tsx for error handling"
+                    - "Use not-found.tsx for 404 pages"
+                    - "Use _components for page-specific components"
+                    - "Use api directory for API routes"
+                    - "Use proper middleware patterns"
+                    - "Use proper environment variables"
+                    - "Use proper configuration files"
+
+            react:
+                version: "19.0.0"
+                features:
+                    - "Use functional components"
+                    - "Use hooks for state management"
+                    - "Use proper event handling"
+                    - "Use proper prop types"
+                    - "Use proper component composition"
+                    - "Use proper error boundaries"
+                    - "Use proper suspense boundaries"
+                    - "Use proper memoization"
+                    - "Use proper refs"
+                    - "Use proper context"
+                conventions:
+                    - "Use named exports"
+                    - "Use proper file organization"
+                    - "Use proper component naming"
+                    - "Use proper prop naming"
+                    - "Use proper event naming"
+                    - "Use proper hook naming"
+                    - "Use proper type naming"
+                    - "Use proper file naming"
+                    - "Use proper directory naming"
+                    - "Use proper import ordering"
+
+            typescript:
+                version: "5.7.2"
+                features:
+                    - "Use strict mode"
+                    - "Use proper type definitions"
+                    - "Use proper interfaces"
+                    - "Use proper type guards"
+                    - "Use proper generics"
+                    - "Use proper utility types"
+                    - "Use proper type assertions"
+                    - "Use proper type predicates"
+                    - "Use proper type narrowing"
+                    - "Use proper type inference"
+                conventions:
+                    - "Use proper type naming"
+                    - "Use proper interface naming"
+                    - "Use proper enum naming"
+                    - "Use proper type imports"
+                    - "Use proper type exports"
+                    - "Use proper type organization"
+                    - "Use proper type documentation"
+                    - "Use proper type comments"
+                    - "Use proper type aliases"
+                    - "Use proper type guards"
+
+        ui_frameworks:
+            shadcn:
+                version: "latest"
+                features:
+                    - "Use proper component imports"
+                    - "Use proper component props"
+                    - "Use proper component variants"
+                    - "Use proper component composition"
+                    - "Use proper component styling"
+                    - "Use proper component theming"
+                    - "Use proper component animations"
+                    - "Use proper component accessibility"
+                    - "Use proper component documentation"
+                    - "Use proper component testing"
+                conventions:
+                    - "Use proper component naming"
+                    - "Use proper component organization"
+                    - "Use proper component imports"
+                    - "Use proper component exports"
+                    - "Use proper component props"
+                    - "Use proper component variants"
+                    - "Use proper component styling"
+                    - "Use proper component theming"
+                    - "Use proper component documentation"
+                    - "Use proper component testing"
+
+            radix:
+                version: "latest"
+                components:
+                    - "@radix-ui/react-accordion"
+                    - "@radix-ui/react-dropdown-menu"
+                    - "@radix-ui/react-slot"
+                    - "@radix-ui/react-switch"
+                    - "@radix-ui/react-toast"
+                    - "@radix-ui/react-tooltip"
+                features:
+                    - "Use proper primitive components"
+                    - "Use proper component composition"
+                    - "Use proper component props"
+                    - "Use proper component variants"
+                    - "Use proper component styling"
+                    - "Use proper component theming"
+                    - "Use proper component animations"
+                    - "Use proper component accessibility"
+                    - "Use proper component documentation"
+                    - "Use proper component testing"
+                conventions:
+                    - "Use proper component naming"
+                    - "Use proper component organization"
+                    - "Use proper component imports"
+                    - "Use proper component exports"
+                    - "Use proper component props"
+                    - "Use proper component variants"
+                    - "Use proper component styling"
+                    - "Use proper component theming"
+                    - "Use proper component documentation"
+                    - "Use proper component testing"
+
+            tailwind:
+                version: "4.0.14"
+                features:
+                    - "Use proper utility classes"
+                    - "Use proper responsive design"
+                    - "Use proper dark mode"
+                    - "Use proper animations"
+                    - "Use proper transitions"
+                    - "Use proper transforms"
+                    - "Use proper filters"
+                    - "Use proper grid system"
+                    - "Use proper flexbox"
+                    - "Use proper spacing"
+                    - "Use tailwind-merge for class composition"
+                    - "Use tailwindcss-animate for animations"
+                    - "Use tailwind-scrollbar for custom scrollbars"
+                conventions:
+                    - "Use proper class naming"
+                    - "Use proper class organization"
+                    - "Use proper class ordering"
+                    - "Use proper class grouping"
+                    - "Use proper class documentation"
+                    - "Use proper class comments"
+                    - "Use proper class aliases"
+                    - "Use proper class variants"
+                    - "Use proper class utilities"
+                    - "Use proper class composition"
+
+        state_management:
+            react_query:
+                version: "5.59.0"
+                features:
+                    - "Use proper query keys"
+                    - "Use proper query invalidation"
+                    - "Use proper query caching"
+                    - "Use proper query prefetching"
+                    - "Use proper query suspense"
+                    - "Use proper query error handling"
+                    - "Use proper query loading states"
+                    - "Use proper query retry logic"
+                    - "Use proper query refetching"
+                    - "Use proper query optimistic updates"
+
+        development_tools:
+            testing:
+                - "jest"
+                - "react-testing-library"
+                - "cypress"
+                - "playwright"
+            linting:
+                - "eslint"
+                - "prettier"
+                - "typescript-eslint"
+                - "eslint-plugin-sonarjs"
+            build_tools:
+                - "vite"
+                - "webpack"
+            package_manager:
+                - "npm"
+            version_control:
+                - "git"
+            ci_cd:
+                - "github-actions"
+            code_quality:
+                - "husky"
+                - "lint-staged"
+                - "sonar"
+            code_generation:
+                - "openapi-ts"
+                - "svg-sprite"
+
+        additional_libraries:
+            - "class-variance-authority"
+            - "clsx"
+            - "dayjs"
+            - "embla-carousel-react"
+            - "html-entities"
+            - "motion"
+            - "react-fast-marquee"
+            - "react-focus-lock"
+            - "react-remove-scroll"
+            - "@microsoft/signalr"
+            - "@hey-api/client-fetch"
