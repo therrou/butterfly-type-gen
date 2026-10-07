@@ -204,7 +204,15 @@ export class Garden2D {
   layout(snap) {
     if (!this.W) return;
     const A = this.letters.filter(l => !l.dead);
-    const res = this.layoutCore(A, this.W, this.H, this.wrapped);
+    // Line breaks come from the stable full-screen height (layoutH), so opening the on-screen keyboard
+    // doesn't re-wrap the words; the block is then scaled to fit the visible height around its centre.
+    const LH = this.layoutH && this.layoutH > this.H ? this.layoutH : this.H;
+    const res = this.layoutCore(A, this.W, LH, this.wrapped);
+    if (LH !== this.H) {
+      const k = Math.min(1, (this.H * 0.8) / Math.max(1, res.n * 2.1 * res.S));
+      for (const l of A) { l.tx = this.W / 2 + (l.tx - this.W / 2) * k; l.ty = this.H / 2 + (l.ty - LH / 2) * k; l.tw *= k; }
+      res.S *= k;
+    }
     this.wrapped = res.wrapped;
     A.forEach(l => { if (l.x == null) { l.x = l.tx; l.y = l.ty; } });
     const S = res.S, last = A[A.length - 1];

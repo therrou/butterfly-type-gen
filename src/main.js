@@ -64,6 +64,10 @@ function sizeType() {
   const W = typeView.clientWidth || innerWidth, H = typeView.clientHeight || innerHeight, d = Math.min(2, devicePixelRatio || 1);
   tbg.width = W * d; tbg.height = H * d;
   c2.width = W * d; c2.height = H * d; c2.style.width = W + 'px'; c2.style.height = H + 'px';
+  // on touch, innerHeight is the full screen (the keyboard only shrinks the visible area), so it is
+  // used for line breaking while W×H (visible area) is used for fitting
+  const layoutH = coarse ? Math.max(H, innerHeight) : H;
+  g2.layoutH = layoutH; g3.view.layoutH = layoutH;
   g2.resize(W, H);
   if (S.mode === 'type') g3.setSize(W, H, d);
 }

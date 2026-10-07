@@ -272,7 +272,8 @@ export class Garden3D {
     for (const l of live) { if (l.ch === ' ') { if (cur.length) words.push(cur); words.push([l]); cur = []; } else cur.push(l); }
     if (cur.length) words.push(cur);
     const total = live.reduce((s, l) => s + adv(l), 0);
-    const box = this.view.box || { w: this.view.W, h: this.view.H };
+    // line breaks follow the stable full-screen shape (layoutH) so the on-screen keyboard doesn't re-wrap words
+    const box = this.view.box || { w: this.view.W, h: Math.max(this.view.H, this.view.layoutH || 0) };
     const maxW = Math.max(...words.filter(w => w[0].ch !== ' ').map(w => w.reduce((s, l) => s + adv(l), 0)), 0, Math.sqrt(total * LINE_H * (box.w / box.h) * (box.w > box.h * 1.3 ? 2.6 : 0.9)), box.w > box.h * 1.3 ? 7 : 2.5);
     const lines = [[]]; let lw = 0;
     for (const w of words) {
