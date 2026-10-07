@@ -307,6 +307,15 @@ export class Garden3D {
   }
   applyFit() { this.root.scale.setScalar(this.fit.s); this.root.position.set(this.fit.x, this.fit.y, 0); }
 
+  // vertical extent of the text block in canvas px (uses the target fit, so it is stable while easing)
+  textBoundsPx() {
+    if (!this.block || !this.letters.some(l => !l.dead && l.g)) return null;
+    const pxPerWorld = this.view.H / VIS_H, s = this.fit.ts, n = this.block.n;
+    const topLocal = ((n - 1) / 2) * LINE_H - 0.36 + 0.78, bottomLocal = ((n - 1) / 2 - (n - 1)) * LINE_H - 0.36 - 0.22;
+    const toPx = y => this.view.H / 2 - (this.fit.ty + y * s) * pxPerWorld;
+    return { top: toPx(topLocal), bottom: toPx(bottomLocal) };
+  }
+
   // ---------- pointer ----------
   bindPointer() {
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3();

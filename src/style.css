@@ -41,8 +41,8 @@ body[data-mode="poster"] #posterBtn { display: none; }
 /* hidden typing field: at the top (a field at the bottom makes iOS scroll the page up to reveal it);
    16px stops iOS zooming on focus; caret/text invisible */
 #typeInput { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; font-size: 16px; pointer-events: none; color: transparent; caret-color: transparent; background: transparent; }
-/* touch: the garden + toolbar follow the visible area above the on-screen keyboard */
-body[data-touch] #typeView { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }
+/* touch: the garden keeps its full size when the keyboard opens; only the text layer slides up (see main.js) */
+#tHost { transition: transform .28s ease; will-change: transform; }
 body[data-touch] .dock { top: calc(var(--vv-top, 0px) + var(--top) + var(--mi)); }
 
 /* ---------- dock (centred in the content area) ---------- */

@@ -84,7 +84,7 @@ function mountType() {
   const host = $('tHost'); host.innerHTML = '';
   host.appendChild(S.engine === '3d' ? g3.canvas : c2);
 }
-c2.addEventListener('pointermove', e => { g2.mx = e.clientX; g2.my = e.clientY; });
+c2.addEventListener('pointermove', e => { const r = c2.getBoundingClientRect(), k = c2.clientWidth / r.width; g2.mx = (e.clientX - r.left) * k; g2.my = (e.clientY - r.top) * k; }); // canvas coords even while the layer is lifted/scaled
 c2.addEventListener('pointerleave', () => { g2.mx = null; });
 
 addEventListener('keydown', e => {
@@ -141,7 +141,6 @@ if (vv && coarse) {
     raf = requestAnimationFrame(() => {
       const root = document.documentElement.style;
       root.setProperty('--vv-top', vv.offsetTop + 'px');
-      root.setProperty('--vv-h', vv.height + 'px');
       if (scrollY) scrollTo(0, 0);
     });
   };
@@ -202,6 +201,33 @@ pover.addEventListener('pointermove', e => {
 });
 pover.addEventListener('pointerup', () => { drag = null; });
 
+// ---------- keyboard lift (touch) ----------
+// When the on-screen keyboard covers the bottom of the garden, slide only the text layer up so the
+// line being typed stays visible. Nothing is resized: size, line breaks and background stay put.
+let liftKey = '';
+function keyboardLift() {
+  const host = $('tHost');
+  const reset = () => { if (liftKey) { liftKey = ''; host.style.transform = ''; } };
+  if (!vv || !coarse || S.mode !== 'type') return reset();
+  const rect = typeView.getBoundingClientRect();
+  const visibleBottom = vv.offsetTop + vv.height - rect.top;          // in garden coordinates
+  if (rect.height - visibleBottom <= 40 || document.activeElement !== typeInput) return reset(); // keyboard not up
+  const b = S.engine === '3d' ? g3.textBoundsPx() : g2.textBounds();
+  if (!b) return reset();
+  // Keep the whole text between the toolbar and the keyboard: slide it up so the last line sits just above
+  // the keyboard, and only if it still doesn't fit, scale the layer down a little (visual only; no re-layout,
+  // so line breaks, size and background are unchanged and it all returns when the keyboard closes).
+  const top = document.querySelector('.dock').getBoundingClientRect().bottom - rect.top + 10;
+  const bottom = visibleBottom - 24, h = b.bottom - b.top;
+  const k = Math.min(1, Math.max(0.5, (bottom - top) / Math.max(1, h)));
+  const dy = Math.min(0, bottom - b.bottom);
+  const key = `${Math.round(dy)}|${k.toFixed(3)}|${Math.round(b.bottom)}`;
+  if (key === liftKey) return;
+  liftKey = key;
+  host.style.transformOrigin = `50% ${Math.round(b.bottom)}px`;
+  host.style.transform = `translateY(${Math.round(dy)}px) scale(${k.toFixed(3)})`;
+}
+
 // ---------- render loop ----------
 function tick(now) {
   requestAnimationFrame(tick);
@@ -213,6 +239,7 @@ function tick(now) {
     drawBg(tx, W, H, S.bg, cw, now / 1000);
     drawGrainPreview(tx, W, H, S.bg.grain);
     if (S.engine === '3d') g3.frame(); else { g2.caret = true; g2.frame(x2, d, now); }
+    keyboardLift();
   } else if (!exporting) {
     const t = posterTime(now), k = pScale * pDpr;
     pb.setTransform(k, 0, 0, k, 0, 0);
@@ -283,7 +310,7 @@ function syncUI() {
   }
   // weight
   const wname = Object.entries(WEIGHTS).find(([, v]) => v === S.weight[S.engine])?.[0] || 'Regular';
-  $('weightBtn').textContent = 'Novo ' + wname;
+  $('weightBtn').textContent = wname;
   const wm = $('weightMenu'); wm.innerHTML = '';
   for (const [n, v] of Object.entries(WEIGHTS)) {
     const b = document.createElement('button'); b.textContent = n; b.style.fontWeight = v; b.setAttribute('aria-checked', String(v === S.weight[S.engine]));

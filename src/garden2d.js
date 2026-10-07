@@ -224,6 +224,14 @@ export class Garden2D {
     if (snap || !this.Sd) { this.Sd = S; this.cx = this.ctx_; this.cy = this.cty; A.forEach(l => { l.x = l.tx; l.y = l.ty; }); }
   }
 
+  // vertical extent of the typed text in canvas px (cap height above the baseline, descenders below)
+  textBounds() {
+    const L = this.letters.filter(l => !l.dead && l.ch !== ' ' && l.ty != null);
+    if (!L.length) return null;
+    const S = this.St || this.Sd;
+    return { top: Math.min(...L.map(l => l.ty)) - S * 0.8, bottom: Math.max(...L.map(l => l.ty)) + S * 0.28 };
+  }
+
   // ---------- input ----------
   backspace() {
     const now = performance.now(); this.lastKey = now;

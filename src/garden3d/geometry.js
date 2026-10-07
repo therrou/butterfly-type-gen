@@ -2,35 +2,53 @@
 // base geometries every instanced layer is built from (moss tuft, stem tube, flower disc, leaf, card, petal).
 import * as THREE from 'three';
 import { font, advance } from '../fonts.js';
+import ClipperLib from 'clipper-lib';
 
 export const DEPTH = 0.07; // letter thickness in em
 
 const glyphCache = new Map();
+const SCALE = 1e5; // Clipper works in integers
+// Fonts may build a glyph from overlapping or self-touching outlines and rely on the renderer's non-zero
+// fill rule (Novo's "B" has one inner outline looping around both counters; its "R" leg overlaps the bowl).
+// Triangulation needs clean shapes with separate holes, so every glyph is flattened and merged with
+// Clipper using that same non-zero rule; the result is a tree of outer shapes and their holes.
 export function glyphShapes(ch, weight) {
   const key = ch + '|' + weight;
   if (glyphCache.has(key)) return glyphCache.get(key);
   const f = font(weight), adv = advance(ch, weight);
   const cmds = f.getPath(ch, -adv / 2, 0, 1).commands; // y-down, baseline at 0, centred on x
   const sp = new THREE.ShapePath();
-  let area = 0, maxA = 0, maxSign = 1, sx = 0, sy = 0, px = 0, py = 0;
-  const acc = (x, y) => { area += px * y - x * py; px = x; py = y; };
-  const close = () => { acc(sx, sy); if (Math.abs(area) > maxA) { maxA = Math.abs(area); maxSign = Math.sign(area); } area = 0; };
-  // Novo draws square corners as zero-radius curves (each corner point repeated ~4×). Earcut chokes on those
-  // duplicates and can triangulate a plain stem ('l', 'I', 'i') into a spike, so drop zero-length segments and
-  // turn degenerate curves into straight lines before building the shape.
+  // Novo also draws square corners as zero-radius curves (each corner point repeated ~4×): drop zero-length
+  // segments and turn degenerate curves into straight lines before flattening.
   const same = (ax, ay, bx, by) => Math.abs(ax - bx) < 1e-6 && Math.abs(ay - by) < 1e-6;
+  let px = 0, py = 0;
   for (const c of cmds) {
-    if (c.type === 'M') { sp.moveTo(c.x, -c.y); sx = px = c.x; sy = py = -c.y; area = 0; continue; }
-    if (c.type === 'Z') { close(); continue; }
+    if (c.type === 'M') { sp.moveTo(c.x, -c.y); px = c.x; py = -c.y; continue; }
+    if (c.type === 'Z') continue;
     const x = c.x, y = -c.y;
     if (same(x, y, px, py)) continue;
     if (c.type === 'L' || (c.type === 'Q' && (same(c.x1, -c.y1, px, py) || same(c.x1, -c.y1, x, y)))) sp.lineTo(x, y);
     else if (c.type === 'Q') sp.quadraticCurveTo(c.x1, -c.y1, x, y);
     else if (c.type === 'C') sp.bezierCurveTo(c.x1, -c.y1, c.x2, -c.y2, x, y);
-    acc(x, y);
+    px = x; py = y;
   }
-  // the largest contour is an outer one; its winding tells toShapes which way is solid
-  const shapes = cmds.length ? sp.toShapes(maxSign > 0) : []; // three: isCCW=false ⇒ clockwise subpaths are solid
+  const paths = sp.subPaths.map(p => p.getPoints(10).map(v => ({ X: Math.round(v.x * SCALE), Y: Math.round(v.y * SCALE) }))).filter(p => p.length > 2);
+  const shapes = [];
+  if (paths.length) {
+    const clip = new ClipperLib.Clipper();
+    clip.AddPaths(paths, ClipperLib.PolyType.ptSubject, true);
+    const tree = new ClipperLib.PolyTree();
+    clip.Execute(ClipperLib.ClipType.ctUnion, tree, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
+    const pts = ring => ring.map(p => new THREE.Vector2(p.X / SCALE, p.Y / SCALE));
+    const walk = node => {
+      for (const outer of node.Childs()) {
+        const shape = new THREE.Shape(pts(outer.Contour()));
+        for (const hole of outer.Childs()) { shape.holes.push(new THREE.Path(pts(hole.Contour()))); walk(hole); } // islands inside holes
+        shapes.push(shape);
+      }
+    };
+    walk(tree);
+  }
   const out = { shapes, adv };
   glyphCache.set(key, out);
   return out;
