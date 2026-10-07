@@ -2,8 +2,8 @@
 // blooms have grown, perch and breathe their wings, flee from a close pointer (with a petal puff),
 // drift on the breeze, and leave when the text is cleared. Coordinates are root-local (em).
 import * as THREE from 'three';
-import { makeWings, bodyGeometry, bodyMaterial, G as BG } from '../../../src/butterflies.js';
-import { drawWing } from '../../../src/wing.js';
+import { makeWings, bodyGeometry, bodyMaterial, G as BG } from '../film/butterflies.js';
+import { drawWing } from '../film/wing.js';
 
 const MAX = 12, TAU = Math.PI * 2;
 function flapAngle(phase, mid = 0.42, amp = 0.85) {

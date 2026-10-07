@@ -1,6 +1,6 @@
 // Gradient-blob background. Blobs are soft radial gradients (not a blur filter), so they render
 // identically at any resolution and across print tiles. Colours come only from the colourway.
-import { rng } from '../../src/rand.js';
+import { rng } from './film/rand.js';
 
 export const defaultBg = () => ({ count: 5, soft: 0.7, scale: 1, grain: 0.35, seed: 3, drift: true, moved: {} });
 

@@ -26,14 +26,14 @@ The whole site sits behind a password pop-up (`auth/gate.js`), enforced on the s
 - **Env vars** (Vercel → Project → Settings → Environment Variables): `SITE_PASSWORD` (required; without it the deployment answers 503 instead of opening up) and optional `AUTH_SECRET` (rotate it to sign everyone out without changing the password).
 - **Cookie**: `bt_auth`, HttpOnly, Secure, SameSite=Lax, 30 days; an HMAC of the password, so changing `SITE_PASSWORD` invalidates every session. Sign out: visit `/__logout`.
 - **Local**: copy `.env.example` → `.env.local` and set `SITE_PASSWORD`; `npm run dev` / `npm run preview` then run the same gate. Without it, local dev stays open.
-- **Vercel project settings**: Root Directory `butterfly-type`, framework preset Vite (build `npm run build`, output `dist`). Keep *Include files outside the root directory in the Build Step* enabled; the 3D butterflies import `../src/butterflies.js`, `../src/wing.js`, `../src/rand.js`. Commit `public/` (fonts, species, images produced by `npm run setup`) so the build doesn't need the setup step.
+- **Vercel project settings**: Root Directory `butterfly-type`, framework preset Vite (build `npm run build`, output `dist`). The project is self-contained: the film's butterfly modules are copied into `src/film/` (keep them in sync with `../src` if the butterfly look changes). Commit `public/` (fonts, species, images produced by `npm run setup`) so the build doesn't need the setup step.
 
 ## Code
 | | |
 |---|---|
 | `src/main.js` | shell: state (localStorage), dock, catalogue, mode/engine switching, export wiring |
 | `src/garden2d.js` | 2D engine (port of Type Garden: growth, weave, roses, wither/cut, 7 poster motions) + species blooms/leaves/critters + glass butterfly sprites |
-| `src/garden3d/` | 3D engine: `geometry.js` glyph extrude + area sampler + base meshes · `shaders.js` shared growth/wind/pointer prelude + layer shaders + tilt-shift · `recipes.js` moss/blossom/jungle · `flock.js` film butterflies (`../src/butterflies.js`) perch/flee/drift · `index.js` engine, petals, pollen, tiled render |
+| `src/garden3d/` | 3D engine: `geometry.js` glyph extrude + area sampler + base meshes · `shaders.js` shared growth/wind/pointer prelude + layer shaders + tilt-shift · `recipes.js` moss/blossom/jungle · `flock.js` film butterflies (`src/film/butterflies.js`, copied from `../src`) perch/flee/drift · `index.js` engine, petals, pollen, tiled render |
 | `src/species.js` | species SVG parsing, colourway recolouring, 3D atlas |
 | `src/background.js` | gradient blobs (radial gradients, seam-free), grain |
 | `src/poster.js` | poster grammar/layout, overlay, tiled PNG + SVG export |

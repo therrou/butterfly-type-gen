@@ -1,5 +1,4 @@
 import { defineConfig, loadEnv } from 'vite';
-import { fileURLToPath } from 'node:url';
 import { gate } from './auth/gate.js';
 
 // Runs the same password gate as middleware.js (Vercel) inside `npm run dev` / `npm run preview`.
@@ -29,13 +28,12 @@ function passwordGate(env) {
   };
 }
 
-// The 3D butterflies are imported straight from the film repo (../src), so allow the parent
-// folder and force a single copy of three for both trees.
+// Self-contained: the film's butterfly modules are copied into src/film, so no files outside this folder are needed.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: env.SITE_PASSWORD ? [passwordGate(env)] : [],
-    server: { port: 5178, fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] } },
+    server: { port: 5178 },
     resolve: { dedupe: ['three'] },
   };
 });

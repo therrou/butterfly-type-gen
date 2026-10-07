@@ -7,7 +7,7 @@ import { RECIPES3D, placeCards } from './recipes.js';
 import { Flock } from './flock.js';
 import { buildAtlas, ofKind } from '../species.js';
 import { mix } from '../brand.js';
-import { rng } from '../../../src/rand.js';
+import { rng } from '../film/rand.js';
 
 const FOV = 30, CAM_Z = 10, VIS_H = 2 * CAM_Z * Math.tan(FOV / 2 * Math.PI / 180);
 const LINE_H = 1.32;
