@@ -38,7 +38,12 @@ body[data-mode="poster"] #posterBtn { display: none; }
 .host canvas { position: absolute; inset: 0; display: block; touch-action: none; }
 .hint { position: absolute; left: 50%; top: 74%; transform: translate(-50%, -50%); margin: 0; color: var(--soft); font-size: 15px; letter-spacing: .06em; text-transform: uppercase; pointer-events: none; transition: opacity .3s; white-space: nowrap; }
 .hint[data-hidden] { opacity: 0; }
-#typeInput { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; font-size: 16px; pointer-events: none; }
+/* hidden typing field: at the top (a field at the bottom makes iOS scroll the page up to reveal it);
+   16px stops iOS zooming on focus; caret/text invisible */
+#typeInput { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; font-size: 16px; pointer-events: none; color: transparent; caret-color: transparent; background: transparent; }
+/* touch: the garden + toolbar follow the visible area above the on-screen keyboard */
+body[data-touch] #typeView { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }
+body[data-touch] .dock { top: calc(var(--vv-top, 0px) + var(--top) + var(--mi)); }
 
 /* ---------- dock (centred in the content area) ---------- */
 .dock { position: fixed; z-index: 20; top: calc(var(--top) + var(--mi)); left: calc(var(--left) + var(--mi)); right: calc(var(--right) + var(--mi)); margin: 0 auto; width: max-content; max-width: calc(100vw - var(--left) - var(--right) - 2 * var(--mi) - 24px);

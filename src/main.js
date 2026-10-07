@@ -87,19 +87,53 @@ addEventListener('keydown', e => {
 });
 // touch devices: a hidden input brings up the keyboard; beforeinput maps to grow / wither / clear
 const typeInput = $('typeInput'), coarse = matchMedia('(pointer: coarse)').matches;
-typeView.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' && S.mode === 'type') typeInput.focus({ preventScroll: true }); });
-typeInput.addEventListener('beforeinput', e => {
-  if (S.mode !== 'type') return;
-  e.preventDefault();
-  const E = eng();
-  if (e.inputType === 'insertText' || e.inputType === 'insertReplacementText') for (const ch of (e.data || '')) E.add(ch);
-  else if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') E.clear();
-  else if (e.inputType.startsWith('delete')) E.backspace();
+// ---- touch typing ----
+// The hidden field always holds one sentinel character so the keyboard's ⌫ has something to delete
+// (an empty field fires no delete at all on iOS / many Android keyboards). On every input we diff
+// the field against what it held before: removed characters wither, new ones grow. This also follows
+// predictive keyboards (Gboard etc.) that type through a composition and rewrite whole words.
+const SENT = '_';
+let fieldWas = SENT, composing = false;
+const resetField = () => { typeInput.value = SENT; fieldWas = SENT; try { typeInput.setSelectionRange(1, 1); } catch {} };
+function fieldDiff() {
+  if (S.mode !== 'type') { resetField(); return; }
+  const old = fieldWas, cur = typeInput.value, E = eng();
+  let p = 0; while (p < old.length && p < cur.length && old[p] === cur[p]) p++;
+  let dels = old.length - p;
+  if (p === 0 && old[0] === SENT && old.length > 1) dels -= 1; // the sentinel itself is not a letter
+  for (let i = 0; i < dels; i++) E.backspace();
+  for (const ch of cur.slice(p)) { if (ch === SENT) continue; if (ch === '\n') E.clear(); else E.add(ch); }
+  if (composing) fieldWas = cur; else resetField();
   hint(); saveSoon();
-});
-// keyboards that skip beforeinput (some Android IMEs): diff the value instead
-typeInput.addEventListener('input', () => { const v = typeInput.value; if (!v) return; for (const ch of v) eng().add(ch); typeInput.value = ''; hint(); });
+}
+typeInput.addEventListener('input', fieldDiff);
+typeInput.addEventListener('compositionstart', () => { composing = true; });
+typeInput.addEventListener('compositionend', () => { composing = false; setTimeout(fieldDiff, 0); });
 typeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); eng().clear(); hint(); } });
+typeInput.addEventListener('focus', () => { resetField(); requestAnimationFrame(() => scrollTo(0, 0)); });
+resetField();
+// focus on a completed tap (click), not on touch-down: focusing on pointerdown let the tap's own
+// focus change blur the field again, so the keyboard flickered open/closed
+typeView.addEventListener('click', () => { if (coarse && S.mode === 'type' && document.activeElement !== typeInput) typeInput.focus({ preventScroll: true }); });
+
+// ---- keyboard-aware layout (touch) ----
+// Keep the garden and toolbar inside the visible area above the on-screen keyboard instead of letting
+// the browser scroll the page; batch the resize events of the keyboard animation into one refit.
+if (coarse) document.body.setAttribute('data-touch', '');
+const vv = window.visualViewport;
+if (vv && coarse) {
+  let raf = 0;
+  const syncVV = () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const root = document.documentElement.style;
+      root.setProperty('--vv-top', vv.offsetTop + 'px');
+      root.setProperty('--vv-h', vv.height + 'px');
+      if (scrollY) scrollTo(0, 0);
+    });
+  };
+  vv.addEventListener('resize', syncVV); vv.addEventListener('scroll', syncVV); syncVV();
+}
 $('hint').textContent = coarse ? 'Tap to start typing' : 'Start typing';
 function hint() { const has = liveText().trim().length > 0 && (S.engine === '3d' ? g3.letters.some(l => !l.dead) : g2.letters.some(l => !l.dead)); $('hint').toggleAttribute('data-hidden', has); }
 
@@ -431,7 +465,7 @@ const onResize = () => { clearTimeout(rz); rz = setTimeout(() => {
   if (S.mode === 'type') { sizeType(); return; }
   const r = $('pstage').getBoundingClientRect(), key = Math.round(r.width) + 'x' + Math.round(r.height);
   if (key === lastBox) return; lastBox = key; sizePoster(); buildPoster();
-}, 60); };
+}, coarse ? 180 : 60); };
 addEventListener('resize', onResize);
 new ResizeObserver(onResize).observe(typeView);
 new ResizeObserver(onResize).observe($('pstage'));
