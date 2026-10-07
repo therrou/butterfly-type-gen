@@ -60,14 +60,23 @@ function engineOpts() {
 // ---------- type view ----------
 const tbg = $('tbg'), tx = tbg.getContext('2d');
 const typeView = $('typeView');
+let stable = { w: 0, h: 0 };
+function stableHeight(W, H) {
+  const full = Math.max(H, innerHeight, document.documentElement.clientHeight);
+  if (Math.abs(W - stable.w) > 2) stable = { w: W, h: full };
+  else stable.h = Math.max(stable.h, full);
+  return stable.h;
+}
 function sizeType() {
   const W = typeView.clientWidth || innerWidth, H = typeView.clientHeight || innerHeight, d = Math.min(2, devicePixelRatio || 1);
   tbg.width = W * d; tbg.height = H * d;
   c2.width = W * d; c2.height = H * d; c2.style.width = W + 'px'; c2.style.height = H + 'px';
-  // on touch, innerHeight is the full screen (the keyboard only shrinks the visible area), so it is
-  // used for line breaking while W×H (visible area) is used for fitting
-  const layoutH = coarse ? Math.max(H, innerHeight) : H;
+  // Line breaking uses the tallest height seen at this width, so the on-screen keyboard (which shrinks
+  // the visible area, and on iOS / Firefox / Samsung Internet also innerHeight) never re-wraps the words;
+  // W×H, the visible area, is only used to fit. A width change (rotation) starts a new measurement.
+  const layoutH = coarse ? stableHeight(W, H) : H;
   g2.layoutH = layoutH; g3.view.layoutH = layoutH;
+  g2.topPad = coarse ? Math.max(0, document.querySelector('.dock').getBoundingClientRect().bottom - typeView.getBoundingClientRect().top + 8) : 0;
   g2.resize(W, H);
   if (S.mode === 'type') g3.setSize(W, H, d);
 }

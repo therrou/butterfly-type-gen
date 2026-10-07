@@ -209,8 +209,10 @@ export class Garden2D {
     const LH = this.layoutH && this.layoutH > this.H ? this.layoutH : this.H;
     const res = this.layoutCore(A, this.W, LH, this.wrapped);
     if (LH !== this.H) {
-      const k = Math.min(1, (this.H * 0.8) / Math.max(1, res.n * 2.1 * res.S));
-      for (const l of A) { l.tx = this.W / 2 + (l.tx - this.W / 2) * k; l.ty = this.H / 2 + (l.ty - LH / 2) * k; l.tw *= k; }
+      // keyboard open: fit into the visible height below the toolbar (topPad)
+      const pad = this.topPad || 0, avail = Math.max(1, this.H - pad);
+      const k = Math.min(1, (avail * 0.8) / Math.max(1, res.n * 2.1 * res.S));
+      for (const l of A) { l.tx = this.W / 2 + (l.tx - this.W / 2) * k; l.ty = pad + avail / 2 + (l.ty - LH / 2) * k; l.tw *= k; }
       res.S *= k;
     }
     this.wrapped = res.wrapped;
