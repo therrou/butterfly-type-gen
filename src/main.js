@@ -23,11 +23,12 @@ const RECIPES = {
 const recipeDef = (eng, id) => RECIPES[eng].find(r => r.id === id) || RECIPES[eng][0];
 
 // ---------- state ----------
-const STORE = 'butterfly-type-v4'; // bump when defaults change so saved settings don't mask them
+const STORE = 'butterfly-type-v5'; // bump when defaults change so saved settings don't mask them
 const DEFAULT = {
   mode: 'type', engine: '2d', recipe: { '2d': 'vines', '3d': 'blossom' }, weight: { '2d': 400, '3d': 700 },
-  // settings sliders start at the middle of their range; 3D letters form from particles (Particles → letter)
-  cw: 'lasting', density: 1.05, butterflies: 6, wind: 0.75, petals: 1, spores: 1, tilt: 1, boil: true, form: true, formDur: 1.75, reveal: 'dissolve',
+  // settings sliders start at the middle of their range; 3D particle formation is off by default
+  // (when switched on, the reveal is preset to Particles → letter)
+  cw: 'lasting', density: 1.05, butterflies: 6, wind: 0.75, petals: 1, spores: 1, tilt: 1, boil: true, form: false, formDur: 1.75, reveal: 'dissolve',
   species: {}, bg: defaultBg(), text: '',
   poster: { words: '', typeSpeed: 1, headline: 'Small steps to\nlasting health', subline: '', motion: 'typed', seed: 7, format: 'A3', bleed: false, artScale: 1, artY: 0, frame: 0.5, playing: true },
 };

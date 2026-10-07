@@ -58,7 +58,7 @@ export class Garden3D {
       uFormDur: { value: 1.3 }, uFormPR: { value: 1 }, uReveal: { value: 1 },
       uPulse: { value: new THREE.Vector4(0, 0, -100, 0) }, uPulseK: { value: 1 },
     };
-    this.opts = { weight: 700, density: 1, butterflies: 4, recipe: 'blossom', cw: null, species: null, wind: 0.5, petals: 1, spores: 1, tilt: 1, blur: 1, form: true, formDur: 1.3, reveal: 'dissolve' };
+    this.opts = { weight: 700, density: 1, butterflies: 4, recipe: 'blossom', cw: null, species: null, wind: 0.5, petals: 1, spores: 1, tilt: 1, blur: 1, form: false, formDur: 1.75, reveal: 'dissolve' };
     this.blobSource = null; // () => [{u, v, ru, rv, col}] in view fractions, set by the shell
     this.letters = []; this.uid = 1; this.clock0 = performance.now();
     this.petals = new Petals(); this.scene.add(this.petals.mesh);
