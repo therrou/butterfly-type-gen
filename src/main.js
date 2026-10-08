@@ -17,6 +17,7 @@ const RECIPES = {
   '3d': [
     { id: 'moss', label: 'Moss', def: { bloom: ['f:white-flower', 'f:blossom', 'f:cherry-blossom'], leaf: ['f:mushroom', 'f:seedling', 'f:four-leaf-clover'], critter: ['f:lady-beetle', 'f:snail', 'f:bug'] } },
     { id: 'blossom', label: 'Blossom', def: { bloom: ['f:cherry-blossom', 'f:blossom', 'f:hibiscus', 'f:white-flower'], leaf: ['f:leaf-fluttering-in-wind'], critter: ['f:honeybee', 'f:lady-beetle'] } },
+    { id: 'timber', label: 'Timber', def: { bloom: [], leaf: [], critter: [] } },
     { id: 'jungle', label: 'Jungle', def: { bloom: ['f:hibiscus', 'f:lotus', 'f:tulip'], leaf: ['f:herb', 'f:leaf-fluttering-in-wind', 'g:fern', 'g:vine-leaf', 'f:maple-leaf'], critter: ['g:dragonfly', 'f:snail', 'f:bug', 'f:cricket', 'f:beetle'] } },
   ],
 };

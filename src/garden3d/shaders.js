@@ -310,13 +310,37 @@ void main(){
 }`;
 export const bodyFrag = FRAG_HEAD + /* glsl */`
 uniform vec3 uColor; uniform vec3 uSide; uniform vec3 uGlowCol;
+uniform float uWood; uniform vec3 uWoodA; uniform vec3 uWoodB; uniform vec3 uLichen; uniform vec4 uGrain; // grain: seed in w
+uniform sampler2D uBark; uniform vec3 uBarkBox; // bark map (see geometry.js barkMap) + its glyph-space box (x0, y0, size)
+uniform vec3 uLightDir;
 varying vec3 vN; varying vec3 vLocal; varying float vReveal;
 float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
 float vn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y); }
+// bark: furrows run along each stroke (from the bark map), the face is shaded as a rounded limb, the
+// furrows are bump-lit and darkened, lichen grows in patches
+vec3 bark(vec3 n){
+  vec4 T=texture2D(uBark,(vLocal.xy-uBarkBox.xy)/uBarkBox.z);
+  float th=atan(T.a*2.0-1.0,T.b*2.0-1.0)*0.5; vec2 dir=vec2(cos(th),sin(th));
+  vec2 q=vec2(dot(vLocal.xy,vec2(-dir.y,dir.x)),dot(vLocal.xy,dir));
+  float fine=vn(q*vec2(150.0,22.0)+uGrain.w), h=T.r*0.85+fine*0.15;
+  float px=length(dFdx(vLocal.xy))+length(dFdy(vLocal.xy))+1e-6;
+  vec2 gh=vec2(dFdx(h),dFdy(h))/px, gd=vec2(dFdx(T.g),dFdy(T.g))/px;
+  if(n.z>0.6){ // rounded limb: lean the normal out towards the nearest edge, more the closer it is
+    float dn=clamp(T.g/0.45,0.0,1.0);
+    n=normalize(vec3(-normalize(gd+1e-5)*(1.0-dn)*1.4,0.3+dn));
+  }
+  n=normalize(n+vec3(-gh*0.0035,0.0));
+  float ridge=smoothstep(0.3,0.5,h)*(0.75+0.25*smoothstep(0.55,0.8,h)), L=max(dot(n,uLightDir),0.0); // plates, cracked by dark furrows
+  vec3 c=mix(uWoodB,uWoodA,ridge)*(0.85+0.3*fine);
+  float lichen=smoothstep(0.78,0.86,vn(vLocal.xy*6.0+uGrain.w*3.1))*smoothstep(0.45,0.7,vn(vLocal.xy*60.0+uGrain.w))*ridge;
+  c=mix(c,uLichen,lichen*0.6);
+  return c*mix(0.4,1.0,ridge)*(0.3+0.95*L);
+}
 void main(){ ${DISSOLVE}
   vec3 n=normalize(vN);
   vec3 col=n.z>0.6 ? uColor : uSide*(0.7+0.3*abs(n.x));
+  if(uWood>0.5) col=bark(n);
   if(vReveal<1.0){
     // fine speckle (single landed particles) over soft clumps (where many have gathered)
     float k=vn(vLocal.xy*16.0)*0.5+vn(vLocal.xy*70.0)*0.2+h21(floor(vLocal.xy*320.0))*0.3;
@@ -430,4 +454,39 @@ void main(){
   float a=(1.0-smoothstep(0.35,1.0,d))*vAlpha;
   if(a<0.004) discard;
   gl_FragColor=vec4(vCol*(1.0+0.6*vGlow)*a,a);
+}`;
+
+// caterpillars crawl round a small ellipse on the letter face: the head moves in pulses and a hump
+// travels from tail to head on each pulse (inchworm-ish); body segments trail the head along the path
+export const caterVert = PRELUDE + /* glsl */`
+attribute float aSeg;
+attribute vec3 iPos; attribute vec3 iDir; attribute vec4 iStem; attribute vec4 iOwn; // iStem: x semi-major, y semi-minor, z pace, w direction · iOwn: x radius, y phase, z delay, w seed
+attribute vec3 iColA; attribute vec3 iColB; attribute vec3 iColC;
+varying vec3 vNrm; varying float vSeg; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+const float SEGS=8.0; // geometry.js CATER_SEGS
+vec2 path(float ph){ vec2 d=normalize(iDir.xy), n=vec2(-d.y,d.x); return d*iStem.x*cos(ph)+n*iStem.y*sin(ph); }
+void main(){
+  float g=growth(iOwn.z)*survival(iOwn.z);
+  vFade=fadeAlpha(iOwn.z);
+  float r=iOwn.x, peri=3.1416*(iStem.x+iStem.y), tt=uTime*iStem.z+iOwn.w*7.0;
+  float head=iOwn.y+iStem.w*(tt-sin(6.2832*tt)/6.2832)*r*2.2/peri*6.2832;
+  float k=aSeg, ph=head-iStem.w*k*r*1.15/peri*6.2832;
+  vec2 c=path(ph), t=normalize(path(ph+0.01*iStem.w)-c);
+  float lift=max(0.0,sin(6.2832*tt+k*0.7))*r*0.9*smoothstep(0.0,2.0,k)*(1.0-k/SEGS*0.5);
+  float rk=r*(k<0.5 ? 1.08 : 1.0-0.35*smoothstep(SEGS*0.55,SEGS-1.0,k))*g;
+  vec3 p=position; vec2 side=vec2(-t.y,t.x);
+  vec3 off=vec3(t*p.x*1.25+side*p.y,p.z*0.9)*rk;
+  vec3 local=iPos+vec3(c,rk+lift)+off;
+  gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(local,1.0);
+  vNrm=normalize(vec3(t*p.x+side*p.y,p.z)); vSeg=k; vA=iColA; vB=iColB; vC=iColC;
+}`;
+export const caterFrag = FRAG_HEAD + /* glsl */`
+uniform vec3 uLightDir;
+varying vec3 vNrm; varying float vSeg; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+void main(){ ${DISSOLVE}
+  vec3 n=normalize(vNrm);
+  vec3 col=vSeg<0.5 ? vC : mix(vA,vB,step(0.5,fract(vSeg*0.5)));
+  col=mix(col,vec3(1.0,0.95,0.8),smoothstep(0.75,0.95,n.z)*step(0.5,vSeg)*0.35*step(0.5,fract(vSeg*0.5+0.5))); // pale dorsal dots
+  float L=max(dot(n,uLightDir),0.0), rim=pow(1.0-abs(n.z),3.0);
+  gl_FragColor=vec4(col*(0.35+0.85*L)+col*rim*0.25,1.0);
 }`;

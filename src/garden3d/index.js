@@ -2,7 +2,7 @@
 // prelude; petal stream; pollen; tilt-shift; the film's iridescent butterflies perch on the blooms.
 import * as THREE from 'three';
 import * as S from './shaders.js';
-import { glyphShapes, glyphBody, GlyphSampler, DEPTH, tuftGeometry, stemGeometry, flowerGeometry, leafGeometry, cardGeometry, petalGeometry } from './geometry.js';
+import { glyphShapes, glyphBody, GlyphSampler, DEPTH, tuftGeometry, stemGeometry, flowerGeometry, leafGeometry, cardGeometry, petalGeometry, mushroomGeometry, bracketGeometry, caterpillarGeometry, barkMap } from './geometry.js';
 import { RECIPES3D, placeCards } from './recipes.js';
 import { Flock } from './flock.js';
 import { buildAtlas, ofKind } from '../species.js';
@@ -14,7 +14,7 @@ const LINE_H = 1.32;
 const col = hex => new THREE.Color(hex);
 
 const BASE = {};
-const base = () => BASE.tuft ? BASE : Object.assign(BASE, { tuft: tuftGeometry(), stem: stemGeometry(), flower5: flowerGeometry(5), flower6: flowerGeometry(6), leaf: leafGeometry(), card: cardGeometry() });
+const base = () => BASE.tuft ? BASE : Object.assign(BASE, { tuft: tuftGeometry(), stem: stemGeometry(), flower5: flowerGeometry(5), flower6: flowerGeometry(6), leaf: leafGeometry(), card: cardGeometry(), shroom: mushroomGeometry(), bracket: bracketGeometry(), cater: caterpillarGeometry() });
 
 class Layer { constructor() { this.pos = []; this.dir = []; this.stem = []; this.own = []; this.u = []; this.a = []; this.b = []; this.c = []; this.atlas = []; this.mode = []; this.n = 0; } }
 
@@ -153,7 +153,7 @@ export class Garden3D {
     if (cwChanged || !this.U.uAtlas.value) this.U.uAtlas.value = this.atlasTex(this.opts.cw);
     if (this.opts.cw) this.sporeU.uColor.value = col(this.opts.cw.spore);
     this.U.uHeight.value = RECIPES3D[this.opts.recipe]?.height ?? 1;
-    this.flock.setCount(this.opts.butterflies);
+    this.flock.setCount(RECIPES3D[this.opts.recipe]?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
     const rebuild = ['weight', 'density', 'recipe', 'cw', 'species'].some(k => o[k] !== undefined && !same(k));
     if (rebuild && this.letters.length) this.rebuildAll(o.regrow);
   }
@@ -177,16 +177,20 @@ export class Garden3D {
     if (!shapes.length) return g;
     const cw = this.opts.cw, uni = { ...this.U, ...g.U };
     const rec0 = RECIPES3D[this.opts.recipe] || RECIPES3D.blossom, bodyCol = rec0.body ? rec0.body(cw) : cw.type;
-    const body = new THREE.Mesh(glyphBody(shapes), new THREE.ShaderMaterial({ vertexShader: S.bodyVert, fragmentShader: S.bodyFrag, uniforms: { ...uni, uColor: { value: col(bodyCol) }, uSide: { value: col(mix(bodyCol, cw.bg, 0.45)) }, uGlowCol: { value: col(mix(cw.flower2, '#FFFFFF', 0.5)) } } }));
+    const sampler = new GlyphSampler(shapes), wood = rec0.wood?.(cw);
+    const woodU = { uWood: { value: wood ? 1 : 0 }, uWoodA: { value: col(wood?.light || '#000000') }, uWoodB: { value: col(wood?.dark || '#000000') }, uLichen: { value: col(wood?.lichen || '#000000') },
+      uGrain: { value: new THREE.Vector4(0, 1, 0, (seed % 1000) / 100) }, uBark: { value: wood ? this.barkTex(ch, sampler) : null }, uBarkBox: { value: new THREE.Vector3(...(wood ? this.barkTex(ch, sampler).box : [0, 0, 1])) } };
+    const body = new THREE.Mesh(glyphBody(shapes, rec0.bevel || 0), new THREE.ShaderMaterial({ vertexShader: S.bodyVert, fragmentShader: S.bodyFrag, uniforms: { ...uni, ...woodU, uColor: { value: col(bodyCol) }, uSide: { value: col(mix(bodyCol, cw.bg, 0.45)) }, uGlowCol: { value: col(mix(cw.flower2, '#FFFFFF', 0.5)) } } }));
     g.group.add(body); g.meshes.push(body);
 
-    const sampler = new GlyphSampler(shapes), r = rng(seed), recipe = RECIPES3D[this.opts.recipe] || RECIPES3D.blossom;
+    const r = rng(seed), recipe = RECIPES3D[this.opts.recipe] || RECIPES3D.blossom;
     const layers = {}, tmp = { pos: new THREE.Vector3(), normal: new THREE.Vector3() }, ctr = sampler.center;
     const sel = this.opts.species;
     const c = {
       r, cw, density: this.opts.density,
       point: (faceP = 0.7) => { const o = { pos: new THREE.Vector3(), normal: new THREE.Vector3() }; return r() < faceP ? sampler.sampleFace(r, o) : sampler.sampleRim(r, o); },
       delay: (p, extra = 0) => Math.min(1, Math.hypot(p.x - ctr.x, p.y - ctr.y) / 0.5) * 0.9 + r() * 0.3 + extra,
+      inside: (x, y) => sampler.inside(x, y),
       count: (a, b = 0) => Math.round((sampler.area * a + sampler.perimeter * b) * this.opts.density),
       add: (name, inst) => { (layers[name] ||= new Layer()); pushInst(layers[name], inst, this.atlasUV); },
       perch: (inst) => { const L = inst.stem?.[0] || 0, d = inst.dir; g.perches.push(new THREE.Vector3(inst.pos.x + d.x * L, inst.pos.y + d.y * L - (inst.stem?.[1] || 0) * L, inst.pos.z + d.z * L + 0.03)); },
@@ -202,18 +206,27 @@ export class Garden3D {
     if (this.opts.form) this.formationMesh(g, sampler, r, uni);
     return g;
   }
+  // bark map texture per glyph (shared by every copy of the letter; kept for the session)
+  barkTex(ch, sampler) {
+    const key = ch + '|' + this.opts.weight;
+    if (this.barkTexs?.has(key)) return this.barkTexs.get(key);
+    const m = barkMap(key, sampler), t = new THREE.DataTexture(m.data, m.N, m.N, THREE.RGBAFormat);
+    t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true; t.box = m.box;
+    (this.barkTexs ||= new Map()).set(key, t);
+    return t;
+  }
   layerMesh(name, L, uni) {
     const B = base(), F = (arr, n) => new THREE.InstancedBufferAttribute(new Float32Array(arr), n);
     let geo, vs, fs, extra = {};
-    if (name === 'moss') {
-      geo = B.tuft.clone();
+    if (name === 'moss' || name === 'shroom' || name === 'bracket') { // surface-standing: tufts, mushrooms, shelf fungi
+      geo = B[name === 'moss' ? 'tuft' : name].clone();
       geo.setAttribute('iPos', F(L.pos, 3)); geo.setAttribute('iNormal', F(L.dir, 3)); geo.setAttribute('iData', F(L.own, 4));
       vs = S.mossVert; fs = S.mossFrag;
     } else {
-      geo = (name === 'stem' ? B.stem : name === 'flower5' ? B.flower5 : name === 'flower6' ? B.flower6 : name === 'leaf' ? B.leaf : B.card).clone();
+      geo = (B[name] || B.card).clone();
       geo.setAttribute('iPos', F(L.pos, 3)); geo.setAttribute('iDir', F(L.dir, 3)); geo.setAttribute('iStem', F(L.stem, 4)); geo.setAttribute('iOwn', F(L.own, 4)); geo.setAttribute('iU', F(L.u, 2));
       if (name === 'card') { geo.setAttribute('iAtlas', F(L.atlas, 4)); geo.setAttribute('iMode', F(L.mode, 1)); }
-      [vs, fs] = { stem: [S.stemVert, S.stemFrag], flower5: [S.flowerVert, S.flowerFrag], flower6: [S.flowerVert, S.flowerFrag], leaf: [S.leafVert, S.leafFrag], card: [S.cardVert, S.cardFrag] }[name];
+      [vs, fs] = { stem: [S.stemVert, S.stemFrag], flower5: [S.flowerVert, S.flowerFrag], flower6: [S.flowerVert, S.flowerFrag], leaf: [S.leafVert, S.leafFrag], card: [S.cardVert, S.cardFrag], cater: [S.caterVert, S.caterFrag] }[name];
     }
     geo.setAttribute('iColA', F(L.a, 3)); geo.setAttribute('iColB', F(L.b, 3)); geo.setAttribute('iColC', F(L.c, 3));
     geo.instanceCount = L.n;
@@ -371,7 +384,7 @@ export class Garden3D {
     const speed = pr.speed; pr.speed *= Math.exp(-dt * 8);
     const gl = this.letters.filter(l => l.g && !l.dead && t - l.g.U.uBirth.value > 1.2 && l.g.emit.length);
     if (!gl.length || !this.opts.petals) return this.petals.flush();
-    const s = this.root.scale.x, size = rec.petals.size * s, cols = rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower] : cw.petals;
+    const s = this.root.scale.x, size = rec.petals.size * s, cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower] : cw.petals);
     const P = new THREE.Vector3(), Vv = new THREE.Vector3();
     this.petalAcc = (this.petalAcc || 0) + rec.petals.rate * this.opts.petals * gl.length * dt;
     for (let n = 0; this.petalAcc >= 1 && n < 40; n++) {
@@ -397,7 +410,8 @@ export class Garden3D {
   }
   puff(pLocal, t) {
     const cw = this.opts.cw, s = this.root.scale.x, P = pLocal.clone().applyMatrix4(this.root.matrixWorld), V = new THREE.Vector3();
-    for (let i = 0; i < 5; i++) { V.set((Math.random() - 0.5) * 0.5, Math.random() * 0.3, 0.2).multiplyScalar(s); this.petals.emit(P, V, col(cw.petals[i % cw.petals.length]), RECIPES3D[this.opts.recipe].petals.size * s, t, 2.5); }
+    const pc = RECIPES3D[this.opts.recipe].petals.cols?.(cw) || cw.petals;
+    for (let i = 0; i < 5; i++) { V.set((Math.random() - 0.5) * 0.5, Math.random() * 0.3, 0.2).multiplyScalar(s); this.petals.emit(P, V, col(pc[i % pc.length]), RECIPES3D[this.opts.recipe].petals.size * s, t, 2.5); }
     this.petals.flush();
   }
 
@@ -421,7 +435,7 @@ export class Garden3D {
   }
   burst(world, t, n) {
     const rec = RECIPES3D[this.opts.recipe], cw = this.opts.cw, s = this.root.scale.x;
-    const cols = rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower, cw.flower2] : cw.petals;
+    const cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower, cw.flower2] : cw.petals);
     const P = new THREE.Vector3(), V = new THREE.Vector3();
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, sp = 0.35 + Math.random() * 0.9;
@@ -445,16 +459,20 @@ export class Garden3D {
     if (!pts.length) return;
     const ramp = [[cw.flower, mix(cw.flower, '#FFFFFF', 0.5), cw.flowerDeep], ['#FFFFFF', cw.flower2, cw.flowerDeep], [cw.flower2, '#FFFFFF', cw.flower]];
     const layers = {}, add = (n, inst) => pushInst(layers[n] ||= new Layer(), inst, this.atlasUV);
-    const species = (k) => ofKind(k, this.opts.species).map(s => s.id).filter(id => this.atlasUV?.has(id));
-    const blooms = species('bloom'), crit = species('critter');
-    pts.forEach((p, i) => {
-      const [a, b, c] = ramp[i % ramp.length], delay = p.d / R * 0.55 + r() * 0.15;
-      const inst = { pos: p.pos, dir: new THREE.Vector3((r() - 0.5) * 0.8, (r() - 0.5) * 0.8, 1).normalize(), stem: [0.012 + r() * 0.03, 0, (r() - 0.5), r()], own: [0.06 + r() * 0.08 * (1 - p.d / R), r() * 6.28, delay, r()], a, b, c };
-      add(i % 3 ? 'flower5' : 'flower6', inst);
-      if (i % 4 === 0) g.perches.push(new THREE.Vector3(p.pos.x, p.pos.y, p.pos.z + 0.05));
-    });
-    if (blooms.length) for (let k = 0; k < 2; k++) { const p = pts[Math.floor(r() * pts.length)]; add('card', { pos: p.pos.clone().setZ(p.pos.z + 0.07), dir: new THREE.Vector3(0, 0, 1), stem: [0, 0, 0, r()], own: [0.17 + r() * 0.07, (r() - 0.5) * 0.8, 0.2 + k * 0.15, r()], u: [0, 0], sp: blooms[Math.floor(r() * blooms.length)], mode: 0 }); }
-    if (crit.length && r() < 0.35) { const p = pts[0]; add('card', { pos: p.pos.clone().setZ(p.pos.z + 0.09), dir: new THREE.Vector3(0, 0, 1), stem: [0, 0, 0, r()], own: [0.17, (r() - 0.5), 0.7, r()], u: [0, 0], sp: crit[Math.floor(r() * crit.length)], mode: 2 }); }
+    const spot = RECIPES3D[this.opts.recipe]?.spot;
+    if (spot) spot({ r, cw, pts, R, add, perch: p => g.perches.push(p) });
+    else {
+      const species = (k) => ofKind(k, this.opts.species).map(s => s.id).filter(id => this.atlasUV?.has(id));
+      const blooms = species('bloom'), crit = species('critter');
+      pts.forEach((p, i) => {
+        const [a, b, c] = ramp[i % ramp.length], delay = p.d / R * 0.55 + r() * 0.15;
+        const inst = { pos: p.pos, dir: new THREE.Vector3((r() - 0.5) * 0.8, (r() - 0.5) * 0.8, 1).normalize(), stem: [0.012 + r() * 0.03, 0, (r() - 0.5), r()], own: [0.06 + r() * 0.08 * (1 - p.d / R), r() * 6.28, delay, r()], a, b, c };
+        add(i % 3 ? 'flower5' : 'flower6', inst);
+        if (i % 4 === 0) g.perches.push(new THREE.Vector3(p.pos.x, p.pos.y, p.pos.z + 0.05));
+      });
+      if (blooms.length) for (let k = 0; k < 2; k++) { const p = pts[Math.floor(r() * pts.length)]; add('card', { pos: p.pos.clone().setZ(p.pos.z + 0.07), dir: new THREE.Vector3(0, 0, 1), stem: [0, 0, 0, r()], own: [0.17 + r() * 0.07, (r() - 0.5) * 0.8, 0.2 + k * 0.15, r()], u: [0, 0], sp: blooms[Math.floor(r() * blooms.length)], mode: 0 }); }
+      if (crit.length && r() < 0.35) { const p = pts[0]; add('card', { pos: p.pos.clone().setZ(p.pos.z + 0.09), dir: new THREE.Vector3(0, 0, 1), stem: [0, 0, 0, r()], own: [0.17, (r() - 0.5), 0.7, r()], u: [0, 0], sp: crit[Math.floor(r() * crit.length)], mode: 2 }); }
+    }
     // own birth clock, but dies with the glyph (death uniforms are shared)
     const uni = { ...this.U, ...g.U, uBirth: { value: t } };
     for (const [name, L] of Object.entries(layers)) if (L.n) { const m = this.layerMesh(name, L, uni); g.group.add(m); g.meshes.push(m); }
