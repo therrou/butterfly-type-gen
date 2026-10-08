@@ -128,7 +128,44 @@ typeInput.addEventListener('focus', () => { resetField(); requestAnimationFrame(
 resetField();
 // focus on a completed tap (click), not on touch-down: focusing on pointerdown let the tap's own
 // focus change blur the field again, so the keyboard flickered open/closed
-typeView.addEventListener('click', () => { if (coarse && S.mode === 'type' && document.activeElement !== typeInput) typeInput.focus({ preventScroll: true }); });
+typeView.addEventListener('click', () => { if (needsMotionPermission && !motionOn && motionAccepted()) requestMotion(); if (coarse && S.mode === 'type' && document.activeElement !== typeInput) typeInput.focus({ preventScroll: true }); });
+
+// ---- motion (touch, 3D): tilt → leaves, hanging stems and falling leaves follow real gravity;
+// shake → the plants rattle and shed leaves. iOS only grants the sensors from a tap (the tip's button);
+// elsewhere they start straight away and the tip just explains them.
+const needsMotionPermission = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
+let motionOn = false;
+function startMotion() {
+  if (motionOn || !coarse || !window.DeviceOrientationEvent) return;
+  motionOn = true;
+  addEventListener('deviceorientation', e => { if (S.engine === '3d' && e.beta != null && e.gamma != null) g3.setGravity(e.beta, e.gamma, screen.orientation?.angle ?? window.orientation ?? 0); });
+  addEventListener('devicemotion', e => {
+    if (S.engine !== '3d' || S.mode !== 'type') return;
+    const a = e.acceleration, g = e.accelerationIncludingGravity;
+    const m = a?.x != null ? Math.hypot(a.x, a.y, a.z) : g?.x != null ? Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81) : 0; // m/s², gravity removed
+    if (m > 11) g3.shake(Math.min(1, (m - 9) / 14));
+  });
+}
+async function requestMotion() {
+  try {
+    const asks = [window.DeviceOrientationEvent, window.DeviceMotionEvent].filter(E => typeof E?.requestPermission === 'function').map(E => E.requestPermission());
+    if ((await Promise.all(asks)).every(s => s === 'granted')) startMotion();
+  } catch {}
+}
+const TIP_KEY = 'bt-motion-tip';
+function motionTip() {
+  if (!coarse || S.engine !== '3d' || S.mode !== 'type' || !window.DeviceOrientationEvent) return;
+  try { if (localStorage.getItem(TIP_KEY)) return; } catch {}
+  $('motionGo').textContent = needsMotionPermission ? 'Enable motion' : 'Got it';
+  $('motionSkip').hidden = !needsMotionPermission;
+  $('motionTip').hidden = false;
+}
+function closeTip(v) { $('motionTip').hidden = true; try { localStorage.setItem(TIP_KEY, v); } catch {} }
+$('motionGo').onclick = () => { if (needsMotionPermission) requestMotion(); closeTip('on'); };
+$('motionSkip').onclick = () => closeTip('off');
+// iOS forgets the grant between page loads; once accepted, re-ask (silently) on the next tap
+const motionAccepted = () => { try { return localStorage.getItem(TIP_KEY) === 'on'; } catch { return false; } };
+if (!needsMotionPermission) startMotion();
 
 // ---- keyboard-aware layout (touch) ----
 // Keep the garden and toolbar inside the visible area above the on-screen keyboard instead of letting
@@ -285,7 +322,7 @@ function setEngine(e) {
   if (S.mode === 'type') { sizeType(); mountType(); eng().setText(keep); hint(); }
   else { sizePoster(); mountPoster(); buildPoster(); }
   if (!$('drawer').hidden) renderCatalogue();
-  syncUI(); save();
+  syncUI(); save(); motionTip();
 }
 function applyLook({ regrow = false } = {}) {
   engineOpts();
@@ -519,7 +556,7 @@ new ResizeObserver(() => { lastBox = ''; onResize(); }).observe(document.querySe
   bindPanel(); syncUI();
   eng().setText(S.text || '');
   hint();
-  $('loading').setAttribute('data-done', '');
+  $('loading').setAttribute('data-done', ''); setTimeout(motionTip, 900);
   requestAnimationFrame(tick);
   window.__bt = { S, g2, g3, renderPNG };
 })();

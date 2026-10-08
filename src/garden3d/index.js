@@ -57,11 +57,13 @@ export class Garden3D {
       uHeight: { value: 1 }, uShimmer: { value: 0.25 }, uGlow: { value: 0.25 }, uAtlas: { value: null },
       uFormDur: { value: 1.3 }, uFormPR: { value: 1 }, uReveal: { value: 1 },
       uPulse: { value: new THREE.Vector4(0, 0, -100, 0) }, uPulseK: { value: 1 },
+      uGravity: { value: new THREE.Vector3(0, -1, 0) }, uShake: { value: 0 },
     };
+    this.gravity = new THREE.Vector3(0, -1, 0); // target for uGravity (setGravity), eased towards each frame
     this.opts = { weight: 700, density: 1, butterflies: 4, recipe: 'blossom', cw: null, species: null, wind: 0.5, petals: 1, spores: 1, tilt: 1, blur: 1, form: false, formDur: 1.75, reveal: 'dissolve' };
     this.blobSource = null; // () => [{u, v, ru, rv, col}] in view fractions, set by the shell
     this.letters = []; this.uid = 1; this.clock0 = performance.now();
-    this.petals = new Petals(); this.scene.add(this.petals.mesh);
+    this.petals = new Petals(); this.scene.add(this.petals.mesh); this.petals.uniforms.uGravity = this.U.uGravity;
     this.initSpores(); this.initPost();
     this.flock = new Flock(this);
     this.pointer = { inside: false, speed: 0, last: -1, prev: new THREE.Vector3(), presence: 0 };
@@ -358,10 +360,29 @@ export class Garden3D {
     });
   }
 
+  // phone tilt (deviceorientation β/γ in degrees, screen rotation in degrees) → "down" in screen space:
+  // device-frame gravity is (sinγ·cosβ, −sinβ, −cosγ·cosβ), then rotated into the current screen orientation
+  setGravity(beta, gamma, angle = 0) {
+    const b = beta * Math.PI / 180, g = gamma * Math.PI / 180, a = angle * Math.PI / 180;
+    const x = Math.sin(g) * Math.cos(b), y = -Math.sin(b), z = -Math.cos(g) * Math.cos(b);
+    this.gravity.set(x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a), z).normalize();
+  }
+
+  // phone shake (0..1): the plants rattle, and every letter sheds a few leaves/petals (at most every 0.4 s)
+  shake(k) {
+    this.U.uShake.value = Math.max(this.U.uShake.value, k);
+    const t = this.now(); if (t - (this.lastShed || 0) < 0.4) return; this.lastShed = t;
+    const v = new THREE.Vector3();
+    for (const l of this.letters) if (l.g && !l.dead) this.burst(l.g.group.getWorldPosition(v), t, Math.round(3 + k * 9));
+    this.flock.scatter();
+  }
+
   // ---------- per-frame ----------
   frame() {
     const t = this.now(), dt = Math.min(0.05, t - (this.lastT || t)); this.lastT = t;
     this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
+    this.U.uGravity.value.lerp(this.gravity, 1 - Math.exp(-dt * 6)).normalize();
+    this.U.uShake.value *= Math.exp(-dt * 2.5);
     if (this.mode === 'type') {
       const k = 1 - Math.exp(-dt * 10);
       this.fit.s += (this.fit.ts - this.fit.s) * k; this.fit.x += (this.fit.tx - this.fit.x) * k; this.fit.y += (this.fit.ty - this.fit.y) * k;
@@ -545,6 +566,7 @@ export class Garden3D {
     const T = P.T, tt = (((tMs / 1000) % T) + T) % T, base = 100, u = tt / T;
     const t = base + tt;
     this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
+    this.U.uGravity.value.set(0, -1, 0); this.U.uShake.value = 0; // posters (and their exports) always hang straight down, still
     const timed = P.motion === 'grow' || P.motion === 'typed' || P.motion === 'scatter';
     for (const l of this.letters) {
       if (!l.g) continue;

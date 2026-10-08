@@ -119,6 +119,21 @@ body[data-mode="poster"] .drawer { left: var(--mi); right: auto; top: var(--mi);
 
 .toast { position: fixed; left: calc(var(--left) + var(--mi) + (100vw - var(--left) - var(--right) - 2 * var(--mi)) / 2); bottom: 64px; transform: translate(-50%, 10px); background: #fff; color: #00008F; padding: 10px 14px; border-radius: 10px; opacity: 0; pointer-events: none; transition: .25s; z-index: 40; max-width: calc(100vw - 32px); }
 .toast[data-show] { opacity: 1; transform: translate(-50%, 0); }
+/* motion tip (touch, 3D): one-time card explaining tilt + shake; its button is the tap iOS needs */
+.motionTip { position: fixed; inset: 0; z-index: 45; display: grid; place-items: end center; padding: 16px 16px max(24px, env(safe-area-inset-bottom)); background: rgba(2,2,24,.5); animation: tipFade .25s ease-out; }
+.tipCard { width: min(100%, 360px); background: var(--ui); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px 18px; text-align: center; animation: popIn .3s ease-out; }
+.tipCard h2 { margin: 6px 0 10px; font-size: 18px; font-weight: 500; }
+.tipCard p { margin: 0 0 8px; color: var(--soft); font-size: 14px; line-height: 1.4; }
+.tipCard p b { color: var(--ink); font-weight: 500; }
+.tipBtns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+.tipBtns button { flex: 1; min-height: 44px; }
+.tipPhone { width: 34px; height: 56px; margin: 0 auto 6px; border: 2px solid var(--ink); border-radius: 9px; position: relative; animation: tipTilt 2.6s ease-in-out infinite; }
+.tipPhone span { position: absolute; left: 50%; bottom: 5px; width: 8px; height: 2px; margin-left: -4px; border-radius: 2px; background: var(--ink); }
+@keyframes tipFade { from { opacity: 0; } }
+/* tilt left, tilt right, then a quick shake */
+@keyframes tipTilt { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-22deg); } 35% { transform: rotate(22deg); } 50% { transform: rotate(0); }
+  58% { transform: translateX(-5px) rotate(-6deg); } 64% { transform: translateX(5px) rotate(6deg); } 70% { transform: translateX(-5px) rotate(-6deg); } 76% { transform: translateX(5px) rotate(6deg); } 82% { transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .tipPhone, .motionTip, .tipCard { animation: none; } }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; background: #00008F; z-index: 50; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); transition: opacity .4s; }
 .loading[data-done] { opacity: 0; pointer-events: none; }
 

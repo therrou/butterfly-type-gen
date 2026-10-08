@@ -17,6 +17,8 @@ uniform vec3 uPointer;
 uniform float uPointerStrength;
 uniform float uPointerRadius;
 uniform vec3 uLightDir;
+uniform vec3 uGravity; // unit "down" in world space: (0,-1,0) at rest, follows the phone's tilt on touch devices
+uniform float uShake;   // 0..1, a phone shake that decays: plants rattle fast, independent of the wind
 varying float vFade;
 
 vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
@@ -55,7 +57,8 @@ vec3 windSway(vec3 w){
   float nx=snoise(vec3(p+vec2(-t*0.55,0.0),t*0.22));
   float ny=snoise(vec3(p+vec2(13.7,-t*0.35),t*0.22+9.1));
   float gust=pow(0.5+0.5*sin(t*0.8-w.x*0.9),10.0)*(0.6+0.4*sin(t*0.13));
-  return vec3(nx+0.35+gust*1.6,ny*0.8,0.0)*uWind;
+  vec3 rattle=vec3(sin(t*31.0+w.x*7.0+w.y*3.0),cos(t*27.0+w.y*6.0-w.x*2.0),0.0)*uShake*1.8;
+  return vec3(nx+0.35+gust*1.6,ny*0.8,0.0)*uWind+rattle;
 }
 // click pulse: a ring that expands from the click point and pushes everything outward as it passes
 uniform vec4 uPulse; // xy world centre, z start time, w strength
@@ -112,7 +115,7 @@ vec3 stemPoint(float h, float gs, vec3 sway){
   vec3 d=normalize(iDir);
   vec3 side=abs(d.z)<0.98?normalize(cross(d,vec3(0.0,0.0,1.0))):vec3(1.0,0.0,0.0);
   vec3 p=iPos+d*len*h;
-  p.y-=iStem.y*len*h*h;
+  p+=uGravity*iStem.y*len*h*h;
   p+=side*iStem.z*len*sin(h*3.14159)*0.35;
   return p+sway*h*h*len*0.55;
 }
@@ -187,6 +190,7 @@ void attach(out vec3 base, out vec3 dir, out float g){
     base=iPos; dir=normalize(iDir);
     g=growth(iOwn.z)*survival(iOwn.z);
   }
+  dir=normalize(dir+(uGravity-vec3(0.0,-1.0,0.0))*0.9); // leaves swing towards gravity as it moves off rest
 }
 `;
 
@@ -353,7 +357,7 @@ void main(){ ${DISSOLVE}
 
 // falling petals: analytic in age — drift with the breeze, flutter, tumble, a little gravity
 export const petalVert = /* glsl */`
-uniform float uTime; uniform float uWind;
+uniform float uTime; uniform float uWind; uniform vec3 uGravity;
 attribute vec3 iSpawn; attribute vec3 iVel; attribute vec4 iLife; attribute vec3 iCol;
 varying vec3 vCol; varying float vShade; varying float vA;
 mat3 rotAxis(vec3 a, float t){
@@ -367,7 +371,8 @@ void main(){
   float alive=step(0.0,age)*step(age,life);
   vec3 p=iSpawn+iVel*age;
   p.x+=uWind*0.12*age*age;
-  p+=vec3(sin(age*3.1+seed*40.0)*0.05, cos(age*2.3+seed*23.0)*0.04-0.03*age*age, sin(age*1.7+seed*9.0)*0.05)*min(age,1.0);
+  p+=uGravity*0.03*age*age*min(age,1.0); // falls along gravity (straight down at rest)
+  p+=vec3(sin(age*3.1+seed*40.0)*0.05, cos(age*2.3+seed*23.0)*0.04, sin(age*1.7+seed*9.0)*0.05)*min(age,1.0);
   mat3 R=rotAxis(vec3(fract(seed*7.1)-0.5,fract(seed*3.3)-0.5,0.4), age*(1.5+seed*3.0)+seed*6.28);
   float s=iLife.z*smoothstep(0.0,0.12,t)*(1.0-smoothstep(0.7,1.0,t))*alive;
   gl_Position=projectionMatrix*viewMatrix*vec4(p+R*(position*s),1.0);

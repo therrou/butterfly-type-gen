@@ -129,6 +129,15 @@
   </aside>
 
   <div class="toast" id="toast"></div>
+  <div class="motionTip" id="motionTip" role="dialog" aria-modal="true" aria-labelledby="motionTipTitle" hidden>
+    <div class="tipCard">
+      <div class="tipPhone" aria-hidden="true"><span></span></div>
+      <h2 id="motionTipTitle">Move your phone</h2>
+      <p><b>Tilt it</b> and the leaves and hanging stems swing towards the ground.</p>
+      <p><b>Shake it</b> to rustle the plants and shake leaves loose.</p>
+      <div class="tipBtns"><button class="pill" id="motionSkip">Not now</button><button class="primary cta" id="motionGo">Enable motion</button></div>
+    </div>
+  </div>
   <div class="loading" id="loading">Growing…</div>
   <script type="module" src="/src/main.js"></script>
 </body>
