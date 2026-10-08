@@ -137,20 +137,41 @@ const needsMotionPermission = typeof window.DeviceOrientationEvent?.requestPermi
 let motionOn = false;
 function startMotion() {
   if (motionOn || !coarse || !window.DeviceOrientationEvent) return;
-  motionOn = true;
-  addEventListener('deviceorientation', e => { if (S.engine === '3d' && e.beta != null && e.gamma != null) g3.setGravity(e.beta, e.gamma, screen.orientation?.angle ?? window.orientation ?? 0); });
+  motionOn = true; g3.setMotion(true);
+  const rot = () => screen.orientation?.angle ?? window.orientation ?? 0;
+  addEventListener('deviceorientation', e => {
+    if (e.beta == null || e.gamma == null) return;
+    MD.orient++; MD.beta = e.beta; MD.gamma = e.gamma;
+    g3.setGravity(e.beta, e.gamma, rot());
+  });
   addEventListener('devicemotion', e => {
-    if (S.engine !== '3d' || S.mode !== 'type') return;
+    MD.motion++;
     const a = e.acceleration, g = e.accelerationIncludingGravity;
+    // no orientation events (some browsers only deliver motion): take gravity from the accelerometer.
+    // At rest it reads the push against gravity, so gravity is its negation (W3C sign convention)
+    if (!MD.orient && g?.x != null) g3.setGravityDevice(-g.x, -g.y, -g.z, rot());
+    if (S.engine !== '3d' || S.mode !== 'type') return;
     const m = a?.x != null ? Math.hypot(a.x, a.y, a.z) : g?.x != null ? Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81) : 0; // m/s², gravity removed
     if (m > 11) g3.shake(Math.min(1, (m - 9) / 14));
   });
 }
+// open the site with #motion to see what the sensors report (event counts, angles, the tilt the garden uses)
+const MD = { orient: 0, motion: 0, beta: null, gamma: null, perm: needsMotionPermission ? 'not asked' : 'not needed' };
+if (location.hash === '#motion') {
+  const box = document.createElement('pre');
+  box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:60;margin:0;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.7);color:#fff;font:11px/1.4 ui-monospace,monospace;pointer-events:none';
+  document.body.appendChild(box);
+  setInterval(() => {
+    const f = v => v == null ? '–' : (+v).toFixed(1), G = g3.grav, R = G.raw;
+    box.textContent = `touch ${coarse} · motion ${motionOn ? 'on' : 'off'} · permission ${MD.perm}\norientation events ${MD.orient} · motion events ${MD.motion}\nβ ${f(MD.beta)}  γ ${f(MD.gamma)}  screen ${f(screen.orientation?.angle ?? window.orientation)}\nin-screen gravity ${R ? f(R.sx * 10) + ', ' + f(R.sy * 10) + ' · ' + f(R.len * 100) + '%' : '–'}\ntilt ${f(G.target * 180 / Math.PI)}° → ${f(G.angle * 180 / Math.PI)}°`;
+  }, 200);
+}
 async function requestMotion() {
   try {
     const asks = [window.DeviceOrientationEvent, window.DeviceMotionEvent].filter(E => typeof E?.requestPermission === 'function').map(E => E.requestPermission());
-    if ((await Promise.all(asks)).every(s => s === 'granted')) startMotion();
-  } catch {}
+    const res = await Promise.all(asks); MD.perm = res.join('/');
+    if (res.every(s => s === 'granted')) startMotion();
+  } catch (e) { MD.perm = 'error: ' + e.message; }
 }
 const TIP_KEY = 'bt-motion-tip';
 function motionTip() {

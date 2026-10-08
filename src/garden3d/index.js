@@ -57,9 +57,10 @@ export class Garden3D {
       uHeight: { value: 1 }, uShimmer: { value: 0.25 }, uGlow: { value: 0.25 }, uAtlas: { value: null },
       uFormDur: { value: 1.3 }, uFormPR: { value: 1 }, uReveal: { value: 1 },
       uPulse: { value: new THREE.Vector4(0, 0, -100, 0) }, uPulseK: { value: 1 },
-      uGravity: { value: new THREE.Vector3(0, -1, 0) }, uShake: { value: 0 },
+      uGravity: { value: new THREE.Vector3(0, -1, 0) }, uHang: { value: 0 }, uShake: { value: 0 },
     };
-    this.gravity = new THREE.Vector3(0, -1, 0); // target for uGravity (setGravity), eased towards each frame
+    // phone tilt as one angle in the screen plane (0 = upright, + = gravity towards screen right); eased each frame
+    this.grav = { target: 0, angle: 0, raw: null, on: false }; // on: the phone's sensors are live (setMotion)
     this.opts = { weight: 700, density: 1, butterflies: 4, recipe: 'blossom', cw: null, species: null, wind: 0.5, petals: 1, spores: 1, tilt: 1, blur: 1, form: false, formDur: 1.75, reveal: 'dissolve' };
     this.blobSource = null; // () => [{u, v, ru, rv, col}] in view fractions, set by the shell
     this.letters = []; this.uid = 1; this.clock0 = performance.now();
@@ -362,10 +363,19 @@ export class Garden3D {
 
   // phone tilt (deviceorientation β/γ in degrees, screen rotation in degrees) → "down" in screen space:
   // device-frame gravity is (sinγ·cosβ, −sinβ, −cosγ·cosβ), then rotated into the current screen orientation
+  setMotion(on) { this.grav.on = on; }
   setGravity(beta, gamma, angle = 0) {
-    const b = beta * Math.PI / 180, g = gamma * Math.PI / 180, a = angle * Math.PI / 180;
-    const x = Math.sin(g) * Math.cos(b), y = -Math.sin(b), z = -Math.cos(g) * Math.cos(b);
-    this.gravity.set(x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a), z).normalize();
+    const b = beta * Math.PI / 180, g = gamma * Math.PI / 180;
+    this.setGravityDevice(Math.sin(g) * Math.cos(b), -Math.sin(b), -Math.cos(g) * Math.cos(b), angle);
+  }
+  // gravity in device axes (x right, y up the screen, z out of it) → the in-screen angle. Only the part of
+  // gravity lying in the screen plane counts: holding the phone tipped back is not a tilt. Lying flat, that
+  // part vanishes and its direction is noise, so the angle fades back to upright.
+  setGravityDevice(x, y, z, angle = 0) {
+    const a = angle * Math.PI / 180, sx = x * Math.cos(a) - y * Math.sin(a), sy = x * Math.sin(a) + y * Math.cos(a);
+    const len = Math.hypot(sx, sy) / (Math.hypot(x, y, z) || 1), w = Math.min(1, Math.max(0, (len - 0.25) / 0.35));
+    this.grav.target = Math.atan2(sx, -sy) * w * w * (3 - 2 * w);
+    this.grav.raw = { sx, sy, len };
   }
 
   // phone shake (0..1): the plants rattle, and every letter sheds a few leaves/petals (at most every 0.4 s)
@@ -381,7 +391,10 @@ export class Garden3D {
   frame() {
     const t = this.now(), dt = Math.min(0.05, t - (this.lastT || t)); this.lastT = t;
     this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
-    this.U.uGravity.value.lerp(this.gravity, 1 - Math.exp(-dt * 6)).normalize();
+    const G = this.grav, d = Math.atan2(Math.sin(G.target - G.angle), Math.cos(G.target - G.angle)); // shortest way round
+    G.angle += d * (1 - Math.exp(-dt * 6));
+    this.U.uGravity.value.set(Math.sin(G.angle), -Math.cos(G.angle), 0);
+    this.U.uHang.value += ((G.on ? 1 : 0) - this.U.uHang.value) * (1 - Math.exp(-dt * 2));
     this.U.uShake.value *= Math.exp(-dt * 2.5);
     if (this.mode === 'type') {
       const k = 1 - Math.exp(-dt * 10);
@@ -566,7 +579,7 @@ export class Garden3D {
     const T = P.T, tt = (((tMs / 1000) % T) + T) % T, base = 100, u = tt / T;
     const t = base + tt;
     this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
-    this.U.uGravity.value.set(0, -1, 0); this.U.uShake.value = 0; // posters (and their exports) always hang straight down, still
+    this.U.uGravity.value.set(0, -1, 0); this.U.uHang.value = 0; this.U.uShake.value = 0; // posters (and their exports) always hang straight down, still
     const timed = P.motion === 'grow' || P.motion === 'typed' || P.motion === 'scatter';
     for (const l of this.letters) {
       if (!l.g) continue;

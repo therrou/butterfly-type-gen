@@ -17,7 +17,8 @@ uniform vec3 uPointer;
 uniform float uPointerStrength;
 uniform float uPointerRadius;
 uniform vec3 uLightDir;
-uniform vec3 uGravity; // unit "down" in world space: (0,-1,0) at rest, follows the phone's tilt on touch devices
+uniform vec3 uGravity;    // unit "down" in the screen plane: (0,-1,0) upright, follows the phone's tilt on touch devices
+uniform float uHang;      // 0 → 1 once the phone's sensors are on: leaves hang and branches sag towards uGravity
 uniform float uShake;   // 0..1, a phone shake that decays: plants rattle fast, independent of the wind
 varying float vFade;
 
@@ -115,7 +116,7 @@ vec3 stemPoint(float h, float gs, vec3 sway){
   vec3 d=normalize(iDir);
   vec3 side=abs(d.z)<0.98?normalize(cross(d,vec3(0.0,0.0,1.0))):vec3(1.0,0.0,0.0);
   vec3 p=iPos+d*len*h;
-  p+=uGravity*iStem.y*len*h*h;
+  p+=uGravity*(iStem.y+uHang*0.18)*len*h*h;
   p+=side*iStem.z*len*sin(h*3.14159)*0.35;
   return p+sway*h*h*len*0.55;
 }
@@ -190,7 +191,7 @@ void attach(out vec3 base, out vec3 dir, out float g){
     base=iPos; dir=normalize(iDir);
     g=growth(iOwn.z)*survival(iOwn.z);
   }
-  dir=normalize(dir+(uGravity-vec3(0.0,-1.0,0.0))*0.9); // leaves swing towards gravity as it moves off rest
+  dir=normalize(dir+uGravity*uHang*(iStem.x>0.0 ? 1.6 : 0.45)); // leaves on stems hang towards gravity; ones on the surface only lean
 }
 `;
 
@@ -371,7 +372,7 @@ void main(){
   float alive=step(0.0,age)*step(age,life);
   vec3 p=iSpawn+iVel*age;
   p.x+=uWind*0.12*age*age;
-  p+=uGravity*0.03*age*age*min(age,1.0); // falls along gravity (straight down at rest)
+  p+=uGravity*0.07*age*age*min(age,1.0); // falls along gravity (straight down when upright)
   p+=vec3(sin(age*3.1+seed*40.0)*0.05, cos(age*2.3+seed*23.0)*0.04, sin(age*1.7+seed*9.0)*0.05)*min(age,1.0);
   mat3 R=rotAxis(vec3(fract(seed*7.1)-0.5,fract(seed*3.3)-0.5,0.4), age*(1.5+seed*3.0)+seed*6.28);
   float s=iLife.z*smoothstep(0.0,0.12,t)*(1.0-smoothstep(0.7,1.0,t))*alive;
