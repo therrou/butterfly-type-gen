@@ -19,6 +19,7 @@ uniform float uPointerRadius;
 uniform vec3 uLightDir;
 uniform vec3 uGravity;    // unit "down" in the screen plane: (0,-1,0) upright, follows the phone's tilt on touch devices
 uniform float uHang;      // 0 → 1 once the phone's sensors are on: leaves hang and branches sag towards uGravity
+uniform float uSink;      // 1 = things on stems droop and hang down · -1 = buoyant (Ocean): they float up, away from gravity
 uniform float uShake;   // 0..1, a phone shake that decays: plants rattle fast, independent of the wind
 varying float vFade;
 
@@ -116,7 +117,7 @@ vec3 stemPoint(float h, float gs, vec3 sway){
   vec3 d=normalize(iDir);
   vec3 side=abs(d.z)<0.98?normalize(cross(d,vec3(0.0,0.0,1.0))):vec3(1.0,0.0,0.0);
   vec3 p=iPos+d*len*h;
-  p+=uGravity*(iStem.y+uHang*0.18)*len*h*h;
+  p+=uGravity*uSink*(iStem.y+uHang*0.18)*len*h*h;
   p+=side*iStem.z*len*sin(h*3.14159)*0.35;
   return p+sway*h*h*len*0.55;
 }
@@ -191,7 +192,7 @@ void attach(out vec3 base, out vec3 dir, out float g){
     base=iPos; dir=normalize(iDir);
     g=growth(iOwn.z)*survival(iOwn.z);
   }
-  dir=normalize(dir+uGravity*uHang*(iStem.x>0.0 ? 1.6 : 0.45)); // leaves on stems hang towards gravity; ones on the surface only lean
+  dir=normalize(dir+uGravity*uSink*uHang*(iStem.x>0.0 ? 1.6 : 0.45)); // leaves on stems hang towards gravity; ones on the surface only lean
 }
 `;
 
@@ -208,7 +209,7 @@ void main(){
   float curl=p.x*p.x*1.2-p.y*0.12;
   vec3 sway=windSway(world.xyz)*0.6+vec3(pointerPush(world.xyz)*1.4,0.0);
   float br=1.0+0.06*uBreath*sin(uTime*0.6+iOwn.w*31.0);
-  vec3 local=base+(d*p.y+side*p.x+n*curl)*iOwn.x*g*br+sway*p.y*p.y*iOwn.x*0.45*g;
+  vec3 local=base+(d*p.y+side*p.x+n*(curl+p.z))*iOwn.x*g*br+sway*p.y*p.y*iOwn.x*0.45*g; // z: kelp ruffles
   gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(local,1.0);
   vLight=wrapLight(n+vec3(0.0,0.0,0.5)); vMid=abs(p.x); vH=p.y; vA=iColA; vB=iColB;
 }`;
@@ -551,4 +552,73 @@ void main(){ ${DISSOLVE}
   col=mix(col,vec3(1.0,0.95,0.8),smoothstep(0.75,0.95,n.z)*step(0.5,vSeg)*0.35*step(0.5,fract(vSeg*0.5+0.5))); // pale dorsal dots
   float L=max(dot(n,uLightDir),0.0), rim=pow(1.0-abs(n.z),3.0);
   gl_FragColor=vec4(col*(0.35+0.85*L)+col*rim*0.25,1.0);
+}`;
+
+// ---- Ocean ----
+// anemones stand on the surface: tentacles wave in the current and pull shut (curl in over the mouth)
+// when the pointer, a click pulse or a shake comes near
+export const anemoneVert = PRELUDE + /* glsl */`
+attribute float aK; attribute float aU; attribute float aA;
+attribute vec3 iPos; attribute vec3 iNormal; attribute vec4 iData; // x scale, y rot, z delay, w seed
+attribute vec3 iColA; attribute vec3 iColB; attribute vec3 iColC;
+varying float vK; varying float vU; varying float vLight; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+void main(){
+  float g=growth(iData.z)*survival(iData.z);
+  vFade=fadeAlpha(iData.z);
+  vec4 world=modelMatrix*vec4(iPos,1.0);
+  float close=clamp(length(pointerPush(world.xyz))/0.22+uShake*1.4,0.0,1.0);
+  close=max(close,1.0-smoothstep(0.35,1.0,g)); // they open as they grow
+  vec3 p=position, C=vec3(0.0,0.42,0.0);
+  if(aK>0.5){
+    float t=uTime*1.3+iData.w*40.0, w=aU*aU;
+    vec2 rad=vec2(cos(aA),sin(aA)), tan2=vec2(-rad.y,rad.x);
+    p.xz+=tan2*sin(t+aA*3.0+aU*4.0)*0.07*w+rad*sin(t*0.7+aA*5.0)*0.04*w;
+    p.y+=sin(t*0.9+aA*2.0)*0.04*w;
+    p=mix(p,C+(p-C)*vec3(0.18,0.5,0.18)+vec3(0.0,0.05,0.0)*aU,close*smoothstep(0.0,0.4,aU));
+  }
+  p.y*=1.0-0.18*close*(1.0-aK);
+  float c=cos(iData.y), s=sin(iData.y); p.xz=mat2(c,-s,s,c)*p.xz;
+  mat3 B=basisFromNormal(normalize(iNormal));
+  vec3 local=iPos+B*(p*iData.x*g);
+  local+=windSway(world.xyz)*aU*aU*iData.x*0.35*g;
+  gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(local,1.0);
+  vLight=wrapLight(iNormal+B*normalize(position-vec3(0.0,0.2,0.0))*0.7);
+  vK=aK; vU=aU; vA=iColA; vB=iColB; vC=iColC;
+}`;
+export const anemoneFrag = FRAG_HEAD + /* glsl */`
+varying float vK; varying float vU; varying float vLight; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+void main(){ ${DISSOLVE}
+  vec3 col=vK<0.5 ? vA*(0.7+0.6*vU) : mix(vB,vC,smoothstep(0.55,1.0,vU));
+  vec3 lit=col*(0.45+0.85*vLight)+vC*0.25*smoothstep(0.8,1.0,vU)*vK; // tips glow a little
+  gl_FragColor=vec4(lit,1.0);
+}`;
+
+// seastars lie on the face and creep: a slow drift round a small loop, turning as they go, arm tips lifting
+export const starVert = PRELUDE + /* glsl */`
+attribute float aR; attribute float aTh;
+attribute vec3 iPos; attribute vec3 iNormal; attribute vec4 iData; // x scale, y rot, z delay, w seed
+attribute vec3 iColA; attribute vec3 iColB; attribute vec3 iColC;
+varying vec2 vP; varying float vR; varying float vLight; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+void main(){
+  float g=growth(iData.z)*survival(iData.z);
+  vFade=fadeAlpha(iData.z);
+  float t=uTime*0.05+iData.w*30.0;
+  vec3 p=position;
+  p.y+=aR*aR*0.08*(0.5+0.5*sin(uTime*0.5+aTh*5.0+iData.w*9.0)); // arm tips lift in turn
+  float rot=iData.y+sin(t*0.7)*0.6, c=cos(rot), s=sin(rot); p.xz=mat2(c,-s,s,c)*p.xz;
+  mat3 B=basisFromNormal(normalize(iNormal));
+  vec3 crawl=B*vec3(cos(t),0.0,sin(t*1.3))*iData.x*0.45;
+  vec3 local=iPos+crawl+B*(p*iData.x*g);
+  gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(local,1.0);
+  vLight=wrapLight(iNormal+B*normalize(vec3(position.x,0.25,position.z))*0.6);
+  vP=position.xz; vR=aR; vA=iColA; vB=iColB; vC=iColC;
+}`;
+export const starFrag = FRAG_HEAD + /* glsl */`
+varying vec2 vP; varying float vR; varying float vLight; varying vec3 vA; varying vec3 vB; varying vec3 vC;
+float sh(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+void main(){ ${DISSOLVE}
+  vec3 col=mix(vB,vA,smoothstep(0.0,0.35,vR));
+  vec2 q=vP*16.0, f=fract(q)-0.5; float bump=(1.0-smoothstep(0.12,0.28,length(f)))*step(0.4,sh(floor(q)));
+  col=mix(col,vC,bump*0.8);
+  gl_FragColor=vec4(col*(0.45+0.8*vLight)*(1.0-0.25*smoothstep(0.85,1.0,vR)),1.0);
 }`;

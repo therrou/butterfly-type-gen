@@ -2,7 +2,7 @@
 // prelude; petal stream; pollen; tilt-shift; the film's iridescent butterflies perch on the blooms.
 import * as THREE from 'three';
 import * as S from './shaders.js';
-import { glyphShapes, glyphBody, GlyphSampler, DEPTH, tuftGeometry, stemGeometry, flowerGeometry, leafGeometry, cardGeometry, petalGeometry, mushroomGeometry, bracketGeometry, caterpillarGeometry, barkMap } from './geometry.js';
+import { glyphShapes, glyphBody, GlyphSampler, DEPTH, tuftGeometry, stemGeometry, flowerGeometry, leafGeometry, cardGeometry, petalGeometry, mushroomGeometry, bracketGeometry, caterpillarGeometry, barkMap, grassGeometry, bladeGeometry, urchinGeometry, scallopGeometry, anemoneGeometry, starGeometry } from './geometry.js';
 import { RECIPES3D, placeCards } from './recipes.js';
 import { Flock } from './flock.js';
 import { buildAtlas, ofKind } from '../species.js';
@@ -14,7 +14,10 @@ const LINE_H = 1.32;
 const col = hex => new THREE.Color(hex);
 
 const BASE = {};
-const base = () => BASE.tuft ? BASE : Object.assign(BASE, { tuft: tuftGeometry(), stem: stemGeometry(), flower5: flowerGeometry(5), flower6: flowerGeometry(6), leaf: leafGeometry(), card: cardGeometry(), shroom: mushroomGeometry(), bracket: bracketGeometry(), cater: caterpillarGeometry() });
+const base = () => BASE.tuft ? BASE : Object.assign(BASE, { tuft: tuftGeometry(), stem: stemGeometry(), flower5: flowerGeometry(5), flower6: flowerGeometry(6), leaf: leafGeometry(), card: cardGeometry(), shroom: mushroomGeometry(), bracket: bracketGeometry(), cater: caterpillarGeometry(),
+  grass: grassGeometry(), blade: bladeGeometry(), urchin: urchinGeometry(), scallop: scallopGeometry(), anemone: anemoneGeometry(), star: starGeometry() });
+
+const SURFACE = new Set(['moss', 'shroom', 'bracket', 'grass', 'urchin', 'scallop', 'anemone', 'star']);
 
 class Layer { constructor() { this.pos = []; this.dir = []; this.stem = []; this.own = []; this.u = []; this.a = []; this.b = []; this.c = []; this.atlas = []; this.mode = []; this.n = 0; } }
 
@@ -57,7 +60,7 @@ export class Garden3D {
       uHeight: { value: 1 }, uShimmer: { value: 0.25 }, uGlow: { value: 0.25 }, uAtlas: { value: null },
       uFormDur: { value: 1.3 }, uFormPR: { value: 1 }, uReveal: { value: 1 },
       uPulse: { value: new THREE.Vector4(0, 0, -100, 0) }, uPulseK: { value: 1 },
-      uGravity: { value: new THREE.Vector3(0, -1, 0) }, uHang: { value: 0 }, uShake: { value: 0 },
+      uGravity: { value: new THREE.Vector3(0, -1, 0) }, uHang: { value: 0 }, uSink: { value: 1 }, uShake: { value: 0 },
     };
     // phone tilt as one angle in the screen plane (0 = upright, + = gravity towards screen right); eased each frame
     this.grav = { target: 0, angle: 0, raw: null, on: false }; // on: the phone's sensors are live (setMotion)
@@ -156,6 +159,7 @@ export class Garden3D {
     if (cwChanged || !this.U.uAtlas.value) this.U.uAtlas.value = this.atlasTex(this.opts.cw);
     if (this.opts.cw) this.sporeU.uColor.value = col(this.opts.cw.spore);
     this.U.uHeight.value = RECIPES3D[this.opts.recipe]?.height ?? 1;
+    this.U.uSink.value = RECIPES3D[this.opts.recipe]?.buoyant ? -1 : 1; // Ocean: kelp and blades float up
     this.flock.setCount(RECIPES3D[this.opts.recipe]?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
     const rebuild = ['weight', 'density', 'recipe', 'cw', 'species'].some(k => o[k] !== undefined && !same(k));
     if (rebuild && this.letters.length) this.rebuildAll(o.regrow);
@@ -223,15 +227,15 @@ export class Garden3D {
   layerMesh(name, L, uni) {
     const B = base(), F = (arr, n) => new THREE.InstancedBufferAttribute(new Float32Array(arr), n);
     let geo, vs, fs, extra = {};
-    if (name === 'moss' || name === 'shroom' || name === 'bracket') { // surface-standing: tufts, mushrooms, shelf fungi
+    if (SURFACE.has(name)) { // surface-standing: tufts, mushrooms, shelf fungi, sea grass, urchins, shells, anemones, seastars
       geo = B[name === 'moss' ? 'tuft' : name].clone();
       geo.setAttribute('iPos', F(L.pos, 3)); geo.setAttribute('iNormal', F(L.dir, 3)); geo.setAttribute('iData', F(L.own, 4));
-      vs = S.mossVert; fs = S.mossFrag;
+      [vs, fs] = name === 'anemone' ? [S.anemoneVert, S.anemoneFrag] : name === 'star' ? [S.starVert, S.starFrag] : [S.mossVert, S.mossFrag];
     } else {
       geo = (B[name] || B.card).clone();
       geo.setAttribute('iPos', F(L.pos, 3)); geo.setAttribute('iDir', F(L.dir, 3)); geo.setAttribute('iStem', F(L.stem, 4)); geo.setAttribute('iOwn', F(L.own, 4)); geo.setAttribute('iU', F(L.u, 2));
       if (name === 'card') { geo.setAttribute('iAtlas', F(L.atlas, 4)); geo.setAttribute('iMode', F(L.mode, 1)); }
-      [vs, fs] = { stem: [S.stemVert, S.stemFrag], flower5: [S.flowerVert, S.flowerFrag], flower6: [S.flowerVert, S.flowerFrag], leaf: [S.leafVert, S.leafFrag], card: [S.cardVert, S.cardFrag], cater: [S.caterVert, S.caterFrag] }[name];
+      [vs, fs] = { stem: [S.stemVert, S.stemFrag], flower5: [S.flowerVert, S.flowerFrag], flower6: [S.flowerVert, S.flowerFrag], leaf: [S.leafVert, S.leafFrag], blade: [S.leafVert, S.leafFrag], card: [S.cardVert, S.cardFrag], cater: [S.caterVert, S.caterFrag] }[name];
     }
     geo.setAttribute('iColA', F(L.a, 3)); geo.setAttribute('iColB', F(L.b, 3)); geo.setAttribute('iColC', F(L.c, 3));
     geo.instanceCount = L.n;

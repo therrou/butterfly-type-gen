@@ -179,6 +179,104 @@ export function bracketGeometry() {
   return geo(pos, idx, { aH: [aH, 1] });
 }
 
+// ---- sea life (Ocean) ----
+// sea grass: 5 long ribbon blades from one root, leaning apart; aH = 0 root → 1 tip
+export function grassGeometry() {
+  const pos = [], aH = [], idx = [], blades = 5, segs = 6;
+  for (let b = 0; b < blades; b++) {
+    const a = b / blades * Math.PI * 2 + b * 0.7, lean = 0.12 + (b % 3) * 0.1, w = 0.035, tall = 0.8 + (b % 2) * 0.35;
+    const dx = Math.cos(a), dz = Math.sin(a), base = pos.length / 3;
+    for (let s = 0; s <= segs; s++) {
+      const h = s / segs, r = lean * h * h, ww = w * (1 - h * 0.7);
+      pos.push(dx * r - dz * ww, h * tall, dz * r + dx * ww, dx * r + dz * ww, h * tall, dz * r - dx * ww);
+      aH.push(h, h);
+    }
+    for (let s = 0; s < segs; s++) { const i = base + s * 2; idx.push(i, i + 1, i + 2, i + 1, i + 3, i + 2); }
+  }
+  return geo(pos, idx, { aH: [aH, 1] });
+}
+
+// kelp blade: a long ribbon with ruffled edges, drawn by the leaf shader (x across, y along, 0 → 1)
+export function bladeGeometry() {
+  const pos = [], idx = [], N = 20;
+  for (let i = 0; i <= N; i++) {
+    const y = i / N, w = 0.12 * Math.sin(Math.PI * Math.pow(y, 0.5)) + 0.015, ruff = Math.sin(y * 34) * 0.06 * Math.sin(Math.PI * y);
+    pos.push(-w, y, ruff, 0, y, 0, w, y, -ruff);
+  }
+  for (let i = 0; i < N; i++) { const a = i * 3; idx.push(a, a + 3, a + 1, a + 1, a + 3, a + 4, a + 1, a + 4, a + 2, a + 2, a + 4, a + 5); }
+  return geo(pos, idx);
+}
+
+// sea urchin: a squat test (aH ≤ 0.2) bristling with spikes (base 0.2 → tip 1) over the upper hemisphere
+export function urchinGeometry() {
+  const pos = [], aH = [], idx = [], R = 0.3, LAT = 4, LON = 8;
+  for (let i = 0; i <= LAT; i++) for (let j = 0; j < LON; j++) {
+    const th = i / LAT * Math.PI * 0.55, ph = j / LON * Math.PI * 2;
+    pos.push(Math.sin(th) * Math.cos(ph) * R, Math.cos(th) * R * 0.75, Math.sin(th) * Math.sin(ph) * R); aH.push(0.2 * (1 - i / LAT));
+  }
+  for (let i = 0; i < LAT; i++) for (let j = 0; j < LON; j++) { const a = i * LON + j, b = i * LON + (j + 1) % LON; idx.push(a, a + LON, b, b, a + LON, b + LON); }
+  const n = 34, ga = Math.PI * (3 - Math.sqrt(5));
+  for (let k = 0; k < n; k++) {
+    const y = 1 - k / n * 0.9, rr = Math.sqrt(1 - y * y), a = k * ga, d = [Math.cos(a) * rr, y, Math.sin(a) * rr];
+    const t = Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], u = norm(cross(d, t)), v = cross(d, u), b0 = pos.length / 3, len = 0.7 + (k * 37 % 10) / 30, w = 0.03;
+    for (let q = 0; q < 3; q++) { const an = q / 3 * Math.PI * 2; pos.push(d[0] * R * 0.75 + (u[0] * Math.cos(an) + v[0] * Math.sin(an)) * w, d[1] * R * 0.6 + (u[1] * Math.cos(an) + v[1] * Math.sin(an)) * w, d[2] * R * 0.75 + (u[2] * Math.cos(an) + v[2] * Math.sin(an)) * w); aH.push(0.2); }
+    pos.push(d[0] * len, d[1] * len * 0.8, d[2] * len); aH.push(1);
+    for (let q = 0; q < 3; q++) idx.push(b0 + q, b0 + (q + 1) % 3, b0 + 3);
+  }
+  return geo(pos, idx, { aH: [aH, 1] });
+}
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); };
+
+// scallop: a ribbed fan lying in x–z (y = out of the surface), hinge at the origin; aH 0 hinge → 1 rim
+export function scallopGeometry() {
+  const pos = [], aH = [], idx = [], A = 24, Rn = 5;
+  pos.push(0, 0.02, 0); aH.push(0);
+  for (let k = 1; k <= Rn; k++) for (let i = 0; i <= A; i++) {
+    const t = k / Rn, a = (i / A - 0.5) * 2.3, rib = Math.abs(Math.sin((i / A) * Math.PI * 9)) * 0.035 * t;
+    pos.push(Math.sin(a) * t * 0.55, 0.16 * (1 - t * t) + rib + 0.02, Math.cos(a) * t * 0.6 - 0.25); aH.push(t);
+  }
+  for (let i = 0; i < A; i++) idx.push(0, 1 + i, 2 + i);
+  for (let k = 1; k < Rn; k++) for (let i = 0; i < A; i++) { const a = 1 + (k - 1) * (A + 1) + i, b = a + A + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+  return geo(pos, idx, { aH: [aH, 1] });
+}
+
+// anemone: a short column (aK 0) crowned by two rings of tapering tentacles (aK 1). aU runs along the
+// tentacle 0 → 1, aA is its angle; the shader waves them and pulls them shut. y up.
+export function anemoneGeometry() {
+  const pos = [], aK = [], aU = [], aA = [], idx = [], R = 10;
+  const ring = (y, r, k, u) => { const b = pos.length / 3; for (let i = 0; i < R; i++) { const a = i / R * Math.PI * 2; pos.push(Math.cos(a) * r, y, Math.sin(a) * r); aK.push(k); aU.push(u); aA.push(a); } return b; };
+  const band = (a, b) => { for (let i = 0; i < R; i++) { const j = (i + 1) % R; idx.push(a + i, b + i, a + j, a + j, b + i, b + j); } };
+  const c0 = ring(0, 0.2, 0, 0), c1 = ring(0.22, 0.17, 0, 0.1), c2 = ring(0.32, 0.22, 0, 0.2); band(c0, c1); band(c1, c2);
+  const top = pos.length / 3; pos.push(0, 0.3, 0); aK.push(0); aU.push(0.25); aA.push(0);
+  for (let i = 0; i < R; i++) idx.push(c2 + i, top, c2 + (i + 1) % R);
+  const SEG = 5, tentacle = (a, r0, len, rise, w) => {
+    const dx = Math.cos(a), dz = Math.sin(a), b0 = pos.length / 3;
+    for (let s = 0; s <= SEG; s++) {
+      const u = s / SEG, r = r0 + len * u, y = 0.32 + rise * u - len * 0.35 * u * u, ww = w * (1 - u * 0.75);
+      for (let q = 0; q < 3; q++) { const an = q / 3 * Math.PI * 2, o = Math.cos(an) * ww, h = Math.sin(an) * ww; pos.push(dx * r - dz * o, y + h, dz * r + dx * o); aK.push(1); aU.push(u); aA.push(a); }
+    }
+    for (let s = 0; s < SEG; s++) for (let q = 0; q < 3; q++) { const a0 = b0 + s * 3 + q, a1 = b0 + s * 3 + (q + 1) % 3; idx.push(a0, a0 + 3, a1, a1, a0 + 3, a1 + 3); }
+  };
+  for (let i = 0; i < 16; i++) tentacle(i / 16 * Math.PI * 2, 0.2, 0.42, 0.42, 0.034);
+  for (let i = 0; i < 10; i++) tentacle((i + 0.5) / 10 * Math.PI * 2, 0.1, 0.24, 0.4, 0.028);
+  return geo(pos, idx, { aK: [aK, 1], aU: [aU, 1], aA: [aA, 1] });
+}
+
+// seastar: five tapering arms, domed in the middle, lying in x–z (y = out of the surface).
+// aR 0 centre → 1 arm tip, aTh the polar angle (arms at multiples of 2π/5)
+export function starGeometry() {
+  const pos = [], aR = [], aTh = [], idx = [], A = 60, Rn = 5;
+  pos.push(0, 0.16, 0); aR.push(0); aTh.push(0);
+  for (let k = 1; k <= Rn; k++) for (let i = 0; i < A; i++) {
+    const t = k / Rn, th = i / A * Math.PI * 2, arm = Math.pow(0.5 + 0.5 * Math.cos(th * 5), 1.8), r = t * (0.26 + 0.74 * arm);
+    pos.push(Math.cos(th) * r, 0.16 * (1 - t * t) * (0.5 + 0.5 * arm) + 0.01, Math.sin(th) * r); aR.push(r); aTh.push(th);
+  }
+  for (let i = 0; i < A; i++) idx.push(0, 1 + i, 1 + (i + 1) % A);
+  for (let k = 1; k < Rn; k++) for (let i = 0; i < A; i++) { const a = 1 + (k - 1) * A + i, b = a + A, a1 = 1 + (k - 1) * A + (i + 1) % A, b1 = a1 + A; idx.push(a, b, a1, a1, b, b1); }
+  return geo(pos, idx, { aR: [aR, 1], aTh: [aTh, 1] });
+}
+
 // caterpillar: SEGS unit spheres, aSeg = 0 head → SEGS-1 tail; the shader lays them along the crawl path
 export const CATER_SEGS = 8;
 export function caterpillarGeometry() {

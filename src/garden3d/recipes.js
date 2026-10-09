@@ -183,14 +183,132 @@ export const RECIPES3D = {
     },
   },
   // letters as reef boulders: porous rock with zones of coral crust and algae, sand on the up-facing ledges,
-  // caustic light over the top (shaders.js reef). Sea life and swimmers grow on them.
+  // caustic light over the top (shaders.js reef). Kelp floats up from the rims (buoyant: uSink = -1), sea grass
+  // and shells sit on the top ledges, coral, anemones, urchins and seastars on the face.
   ocean: {
-    label: 'Ocean', petals: { rate: 0, size: 0.02 }, spores: 0.6, height: 1, bevel: 0.014, butterflies: false,
+    label: 'Ocean', petals: { rate: 0, size: 0.02, cols: cw => ['#FFFFFF', mix(cw.flower2, '#FFFFFF', 0.5), mix(cw.flower2, cw.bg, 0.2)] }, spores: 0.6, height: 1, bevel: 0.014, butterflies: false, buoyant: true,
     reef: cw => ({ rockA: mix('#9A968C', cw.bg, 0.14), rockB: mix('#2A2730', cw.bg, 0.18), sand: mix('#E8D6AC', cw.bg, 0.08),
       coralA: cw.flower, coralB: cw.flowerDeep, algae: mix(cw.foliage[1], '#6E7A2E', 0.4), caustic: mix(cw.flower2, '#FFFFFF', 0.6) }),
-    build() {},
+    build(c) {
+      const { r } = c;
+      // a rim point whose outward normal passes `test` (falls back to any rim point)
+      const rim = test => { let p; for (let k = 0; k < 24; k++) { p = c.point(0); if (test(p.normal)) break; } return p; };
+      // kelp rising from the top edges, set back so it stands behind the letter rather than over it
+      for (let k = 0, n = Math.max(1, c.count(0, 0.75)); k < n; k++) {
+        const p = rim(nm => nm.y > 0.35), dir = new THREE.Vector3(p.normal.x * 0.3 + (r() - 0.5) * 0.35, 1, 0.04).normalize();
+        kelp(c, p.pos.clone().setZ(DEPTH * between(r, 0.1, 0.4)), dir, between(r, 0.4, 0.85), c.delay(p.pos, 0.1));
+      }
+      // sea grass in tufts along the top ledges, where the sand settles
+      for (let k = 0, n = c.count(0, 2.6); k < n; k++) {
+        const p = rim(nm => nm.y > 0.5), d0 = c.delay(p.pos, 0.2);
+        for (let j = 0, m = 2 + Math.floor(r() * 4); j < m; j++) grass(c, p.pos.clone().add(new THREE.Vector3((r() - 0.5) * 0.06, 0, (r() - 0.5) * 0.03)), new THREE.Vector3(p.normal.x * 0.3, 1, 0.35), d0 + j * 0.05);
+      }
+      // short algae turf in a few patches on the face
+      for (let k = 0, np = c.count(9, 0); k < np; k++) {
+        const ctr = c.point(1), R = between(r, 0.03, 0.07);
+        for (let i = 0, n = Math.round(R * R * 7000 * c.density); i < n; i++) {
+          const a = r() * 6.28, d = R * Math.sqrt(r()), x = ctr.pos.x + Math.cos(a) * d, y = ctr.pos.y + Math.sin(a) * d;
+          if (!c.inside(x, y)) continue;
+          const pos = new THREE.Vector3(x, y, ctr.pos.z + 0.002);
+          c.add('moss', { pos, normal: new THREE.Vector3(0, 0, 1), data: [between(r, 0.025, 0.045), r() * 6.28, c.delay(pos), r()], a: mix(c.cw.foliage[0], '#1E2A10', 0.4), b: mix(c.cw.foliage[1], '#6E7A2E', 0.4), c: mix(c.cw.foliage[2], '#C8C060', 0.3) });
+        }
+      }
+      // staghorn coral clumps on the face and edges, sea fans standing on the top ledges
+      for (let k = 0, n = c.count(0.9, 0.35); k < n; k++) {
+        const p = r() < 0.6 ? c.point(1) : rim(nm => nm.y > -0.2), d0 = c.delay(p.pos, 0.3);
+        staghorn(c, p.pos.clone(), p.normal.clone(), d0);
+      }
+      for (let k = 0, n = c.count(0, 0.3); k < n; k++) {
+        const p = rim(nm => nm.y > 0.4);
+        fan(c, p.pos.clone(), c.delay(p.pos, 0.3));
+      }
+      // anemones, urchins and seastars on the face; scallops on the ledges
+      for (let i = 0, n = c.count(14, 0); i < n; i++) { const p = c.point(1); anemone(c, p.pos.clone(), between(r, 0.07, 0.12), c.delay(p.pos, 0.5)); }
+      for (let k = 0, n = c.count(1.0, 0.15); k < n; k++) {
+        const p = c.point(0.85), d0 = c.delay(p.pos, 0.6);
+        for (let j = 0, m = 1 + Math.floor(r() * 3); j < m; j++) urchin(c, p.pos.clone().add(new THREE.Vector3((r() - 0.5) * 0.06, (r() - 0.5) * 0.06, 0)), p.normal.clone(), d0 + j * 0.1);
+      }
+      for (let k = 0, n = Math.max(r() < 0.55 ? 1 : 0, c.count(0.7, 0)); k < n; k++) seastar(c, c.delay(new THREE.Vector3(), 0.9));
+      for (let k = 0, n = c.count(0, 0.7); k < n; k++) { const p = rim(nm => nm.y > 0.5); scallop(c, p.pos.clone(), new THREE.Vector3(p.normal.x * 0.2, 1, 0.5).normalize(), c.delay(p.pos, 0.7)); }
+    },
+    // click on a letter: a ring of sea grass, anemones and urchins, a coral sprig and a couple of kelp sprouts
+    spot({ r, cw, pts, R, add }) {
+      const x = { r, cw, add };
+      pts.forEach((p, i) => {
+        const delay = p.d / R * 0.55 + r() * 0.15, pos = p.pos.clone();
+        if (i === 0) staghorn(x, pos, new THREE.Vector3(0, 0, 1), delay);
+        else if (i < 3) kelp(x, pos, new THREE.Vector3((r() - 0.5) * 0.4, 1, 0.6).normalize(), between(r, 0.18, 0.35), delay);
+        else if (i % 3 === 0) anemone(x, pos, between(r, 0.06, 0.1), delay);
+        else if (i % 3 === 1) grass(x, pos, new THREE.Vector3((r() - 0.5) * 0.3, 0.6, 1), delay);
+        else if (r() < 0.5) urchin(x, pos, new THREE.Vector3(0, 0, 1), delay + 0.2);
+        else grass(x, pos, new THREE.Vector3((r() - 0.5) * 0.3, 0.6, 1), delay);
+      });
+    },
   },
 };
+// ---- Ocean pieces: each takes a context with r (rng), cw (colourway) and add(layer, instance) ----
+const KELP = cw => [mix(cw.foliage[0], '#3A3012', 0.6), mix(cw.foliage[1], '#8A6A24', 0.6), mix(cw.foliage[2], '#C8A848', 0.55)];
+const STAR = ['#E2763A', '#D8554A', '#F0A040', '#C2486A'];
+const SHELL = [['#B9826A', '#E8B89A', '#F6E6D6'], ['#A86478', '#E6A6B0', '#F8E0E4'], ['#C8A06A', '#EED29A', '#FFF2D8']];
+// a kelp stalk floating up, ruffled blades alternating along it
+function kelp(x, pos, dir, len, d0) {
+  const { r, cw, add } = x, K = KELP(cw), stem = [len, between(r, 0.12, 0.35), (r() - 0.5) * 1.4, r()];
+  add('stem', { pos, dir, stem, own: [between(r, 0.005, 0.008), 0, d0, r()], a: K[0], b: K[1] });
+  let side = r() < 0.5 ? -1 : 1;
+  for (let u = 0.2 + r() * 0.1; u <= 0.95; u += between(r, 0.14, 0.22)) {
+    side = -side;
+    add('blade', { pos, dir, stem, own: [between(r, 0.16, 0.26) * (1.15 - u * 0.45), (r() - 0.5) * 1.4, d0 + u * 0.9, r()], u: [u, side * 0.45], a: mix(K[1], K[2], r() * 0.6), b: K[0] });
+  }
+  add('blade', { pos, dir, stem, own: [between(r, 0.14, 0.2), 0, d0 + 0.95, r()], u: [1, 0], a: mix(K[1], K[2], 0.5), b: K[0] });
+}
+function grass({ r, cw, add }, pos, up, d) {
+  add('grass', { pos, normal: up.clone().add(new THREE.Vector3((r() - 0.5) * 0.5, 0, (r() - 0.5) * 0.3)).normalize(), data: [between(r, 0.1, 0.18), r() * 6.28, d, r()],
+    a: mix(cw.foliage[0], '#0E3A3A', 0.35), b: mix(cw.foliage[1], '#2E7A6A', 0.25), c: mix(cw.foliage[2], '#D8E8A0', 0.25) });
+}
+// forking coral; `planar` keeps the forks in the face plane (sea fans)
+function coralBranch(x, pos, dir, len, rad, d0, depth, max, spread, cols) {
+  const { r, add } = x, stem = [len, 0, (r() - 0.5) * 0.6, r()];
+  add('stem', { pos, dir, stem, own: [rad, 0, d0, r()], a: cols[0], b: cols[1] });
+  if (depth >= max) return;
+  for (let k = 0, n = 1 + Math.floor(r() * 2); k < n; k++) {
+    const u = between(r, 0.45, 0.85), at = pos.clone().addScaledVector(dir, len * u), side = new THREE.Vector3(-dir.y, dir.x, 0).normalize();
+    const nd = dir.clone().addScaledVector(side, (r() < 0.5 ? -1 : 1) * between(r, 0.4, spread)).add(new THREE.Vector3(0, 0, max > 2 ? 0 : (r() - 0.3) * 0.5)).normalize();
+    coralBranch(x, at, nd, len * between(r, 0.55, 0.8), rad * 0.72, d0 + u * 0.5, depth + 1, max, spread, cols);
+  }
+}
+function staghorn(x, pos, normal, d0) {
+  const { r, cw } = x, cols = r() < 0.6 ? [cw.flowerDeep, mix(cw.flower, '#FFFFFF', 0.35)] : [mix(cw.flower2, cw.flowerDeep, 0.35), mix(cw.flower2, '#FFFFFF', 0.4)];
+  for (let j = 0, m = 2 + Math.floor(r() * 2); j < m; j++)
+    coralBranch(x, pos, new THREE.Vector3(normal.x + (r() - 0.5) * 1.2, normal.y + (r() - 0.2) * 1.0, Math.max(normal.z, 0.3) + 0.3).normalize(), between(r, 0.07, 0.13), between(r, 0.011, 0.016), d0 + j * 0.08, 0, 2, 0.9, cols);
+}
+function fan(x, pos, d0) {
+  const { r, cw } = x, cols = [mix(cw.flowerDeep, '#2A1040', 0.25), r() < 0.5 ? cw.flower : cw.flower2];
+  for (let j = 0, m = 2 + Math.floor(r() * 2); j < m; j++)
+    coralBranch(x, pos, new THREE.Vector3((r() - 0.5) * 1.1, 1, 0.12).normalize(), between(r, 0.08, 0.13), 0.005, d0 + j * 0.05, 0, 3, 1.1, cols);
+}
+function anemone({ r, cw, add }, pos, size, d) {
+  const pal = r() < 0.6 ? [mix(cw.flowerDeep, '#3A1A2A', 0.3), cw.flower, mix(cw.flower2, '#FFFFFF', 0.5)] : [mix(cw.flower2, '#12304A', 0.4), cw.flower2, '#FFFFFF'];
+  add('anemone', { pos, normal: new THREE.Vector3((r() - 0.5) * 0.4, 0.25 + r() * 0.3, 1).normalize(), data: [size * 1.4, r() * 6.28, d, r()], a: pal[0], b: pal[1], c: pal[2] });
+}
+function urchin({ r, cw, add }, pos, normal, d) {
+  add('urchin', { pos, normal: normal.clone().add(new THREE.Vector3(0, 0.2, 0.3)).normalize(), data: [between(r, 0.045, 0.075), r() * 6.28, d, r()],
+    a: mix('#1A1030', cw.flowerDeep, 0.15), b: mix('#3A1F5A', cw.flowerDeep, 0.3), c: mix('#8A5FB0', cw.flower2, 0.3) });
+}
+// a seastar somewhere its crawl loop stays on the letter
+function seastar(c, d) {
+  const { r } = c;
+  for (let k = 0; k < 20; k++) {
+    const p = c.point(1), sz = between(r, 0.075, 0.11), m = sz * 1.1;
+    if (![[m, 0], [-m, 0], [0, m], [0, -m]].every(([dx, dy]) => c.inside(p.pos.x + dx, p.pos.y + dy))) continue;
+    const a = pick(r, STAR);
+    c.add('star', { pos: p.pos.clone().setZ(p.pos.z + 0.003), normal: new THREE.Vector3(0, 0, 1), data: [sz, r() * 6.28, d, r()], a, b: mix(a, '#FFE0C0', 0.25), c: '#FFF1D6' });
+    return;
+  }
+}
+function scallop({ r, add }, pos, normal, d) {
+  const [a, b, cc] = pick(r, SHELL);
+  add('scallop', { pos, normal, data: [between(r, 0.09, 0.14), r() * 6.28, d, r()], a, b, c: cc });
+}
 const DRY = ['#C98A3A', '#A5532A', '#7A4A2A', '#D9B26A', '#8E5B2E'];
 const CATER = cw => [[mix('#7DBF3A', cw.foliage[1], 0.3), mix('#B8D84A', cw.foliage[2], 0.3), '#3A2A12'], ['#E07A1F', '#22160E', '#1A120C'], [mix('#5FA83A', cw.foliage[1], 0.2), '#E8C33A', '#2A1D15']];
 function caterpillar(c, ctr, delay) {
