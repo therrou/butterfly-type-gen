@@ -213,9 +213,41 @@ export class Sea {
     });
   }
 
-  // ---- poster: no swimmers yet (the poster motions arrive with the poster step) ----
-  posterPerches() {}
-  posterPose() { this.poses = { fish: [], horses: [], jellies: [] }; }
+  // ---- poster: deterministic poses from loop time ----
+  posterPerches(seed) {
+    const all = [];
+    for (const l of this.e.letters) if (l.g) l.g.perches.forEach((p, i) => all.push({ p: p.clone().add(l.g.group.position), h: hash(seed * 31 + l.id * 7 + i) }));
+    this.posterPerch = all.sort((a, b) => a.h - b.h); this.posterSeed = seed;
+  }
+  posterPose(tt, P) {
+    const out = { fish: [], horses: [], jellies: [] }, b = this.bounds(), cw = this.e.opts.cw || {}, h = k => hash((this.posterSeed || 1) * 31 + k);
+    this.poses = out;
+    if (!this.want) return;
+    const cols = this.colours(), my = (b.y0 + b.y1) / 2;
+    const school = (cx, cy, dir, n, size, k) => {
+      const [a, c, st] = cols[Math.floor(h(k) * cols.length)];
+      for (let i = 0; i < n; i++) out.fish.push({ p: new THREE.Vector3(cx + (h(k + i * 3 + 1) - 0.5) * 0.6 + Math.sin(tt * 1.3 + i) * 0.02, cy + (h(k + i * 3 + 2) - 0.5) * 0.3 + Math.sin(tt * 1.1 + i * 2) * 0.02, 0.45 + (h(k + i * 3 + 3) - 0.5) * 0.2),
+        fwd: new THREE.Vector3(dir, 0, 0), size: size * (0.85 + h(k + i) * 0.3), a, b: c, stripes: st, ph: i * 1.7, beat: 12 });
+    };
+    if (P.motion === 'typed') { // once the word is typed, a school swims across, past the text
+      const tv = tt - P.typeEnd - 0.9; if (tv < 0 || tv > 7) return;
+      const u = tv / 7, e = u * u * (3 - 2 * u);
+      school(b.x0 - 1 + (b.x1 - b.x0 + 2) * e, my + 0.55 + Math.sin(u * Math.PI) * 0.25, 1, 7, 0.13, 1);
+      return;
+    }
+    if (P.motion === 'visit') { // a jellyfish pulses its way up through the frame
+      const u = tt / P.T, k = Math.max(0, Math.sin(tt * 2.1)), y = b.y0 - 0.5 + (b.y1 - b.y0 + 1) * (u + 0.02 * k);
+      out.jellies.push({ p: new THREE.Vector3(b.x0 + (b.x1 - b.x0) * (0.3 + 0.1 * Math.sin(u * 3)), y, 0.3), size: 0.34, col: cw.flower2 || '#9FE3EE', ph: 0, rate: 2.1 });
+      return;
+    }
+    // the rest: seahorses holding the first perches, and a small school idling beside the text
+    const n = Math.min(3, this.want), all = this.posterPerch || [];
+    all.slice(0, Math.min(2, n)).forEach((a, i) => {
+      const col = HORSE[Math.floor(h(50 + i) * HORSE.length)];
+      out.horses.push({ p: a.p.clone().add(new THREE.Vector3(0, 0.3 * 0.42 + Math.sin(tt * 1.1 + i) * 0.01, 0.03)), fwd: new THREE.Vector3(h(60 + i) < 0.5 ? 1 : -1, 0, 0.25), size: 0.3, a: mix2(col, '#FFFFFF', 0.35), b: col, ph: i });
+    });
+    school(b.x0 + (b.x1 - b.x0) * 0.78 + Math.sin(tt * 0.4) * 0.12, my + 0.7, -1, 5, 0.11, 7);
+  }
 
   sync() {
     const cw = this.e.opts.cw || {};
@@ -240,6 +272,7 @@ export class Sea {
     for (const k of Object.keys(A)) if (A[k].isInstancedBufferAttribute) A[k].needsUpdate = true;
   }
 }
+const hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
 const lin = hex => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const mix2 = (a, b, t) => '#' + new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString();
 

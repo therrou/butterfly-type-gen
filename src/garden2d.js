@@ -823,7 +823,10 @@ export class Garden2D {
       for (let k = 0; k < 20; k++) { const a = k / 20 * Math.PI * 2; pts.push([lx + Math.cos(a) * r, ly + Math.sin(a) * r]); }
       B.fill(pts, st.C.line);
     }
-    if (P.preset === 'visit') this.posterFly(B, tt, P);
+    if (P.preset === 'visit' && this.recipe().sea) { // Ocean: a jellyfish drifts up through the frame
+      const u = tt / P.T, sz = P.S * 1.1;
+      B.species(getSpecies('f:jellyfish'), bx.x + bx.w * (0.3 + 0.08 * Math.sin(u * 6)), bx.y + bx.h + sz - (bx.h + sz * 2) * u, sz * (1 + 0.06 * Math.sin(tt / 1000 * 4)), Math.sin(tt / 1000 * 1.3) * 0.08);
+    } else if (P.preset === 'visit') this.posterFly(B, tt, P);
     else if (P.preset === 'typed') { const tv = tt - P.typeEnd - 900; if (tv >= 0 && tv <= VISIT_MS) this.posterFly(B, tv, P); }
     else if (P.preset !== 'typed') this.posterPerched(B, tt, Math.min(3, this.opts.butterflies | 0));
     if (P.preset === 'typed') {

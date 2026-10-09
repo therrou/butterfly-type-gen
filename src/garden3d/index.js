@@ -165,7 +165,7 @@ export class Garden3D {
     this.U.uSink.value = RECIPES3D[this.opts.recipe]?.buoyant ? -1 : 1; // Ocean: kelp and blades float up
     const rec = RECIPES3D[this.opts.recipe];
     if (o.recipe !== undefined && !same('recipe')) { const off = rec?.bubbles ? this.petals : this.bubbles; off.clear(); off.flush(); } // bubbles only in Ocean, petals/leaves only elsewhere
-    this.flock.setCount(rec?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
+    this.flock.setCount(rec?.butterflies === false ? 0 : this.opts.butterflies); this.flock.off = rec?.butterflies === false; // Timber has caterpillars instead
     this.sea.setCount(rec?.sea ? this.opts.butterflies : 0); // Ocean: the same slider counts the sea life
     const rebuild = ['weight', 'density', 'recipe', 'cw', 'species'].some(k => o[k] !== undefined && !same(k));
     if (rebuild && this.letters.length) this.rebuildAll(o.regrow);
@@ -629,7 +629,7 @@ export class Garden3D {
       const lx = (b.x + b.w / 2 + Math.sin(ph) * b.w * 0.4 - this.view.W / 2) * k, ly = -(b.y + b.h / 2 + Math.sin(ph * 2) * b.h * 0.24 - this.view.H / 2) * k;
       this.U.uPointer.value.set(lx, ly, 0); this.U.uPointerStrength.value = -0.5; this.U.uPointerRadius.value = 1.2 * this.root.scale.x;
     } else this.U.uPointerStrength.value = 0;
-    this.petals.uniforms.uWind.value = this.bubbles.uniforms.uWind.value = this.U.uWind.value;
+    this.petals.uniforms.uWind.value = this.bubbles.uniforms.uWind.value = this.U.uWind.value; this.bubbles.uniforms.uRise.value = 0.11 * this.root.scale.x;
     if (this.opts.petals && P.motion !== 'typed') this.emitPetals(t, 1 / 60);
     this.fauna('posterPose', tt, P);
   }

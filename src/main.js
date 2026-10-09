@@ -20,9 +20,11 @@ const RECIPES = {
     { id: 'blossom', label: 'Blossom', def: { bloom: ['f:cherry-blossom', 'f:blossom', 'f:hibiscus', 'f:white-flower'], leaf: ['f:leaf-fluttering-in-wind'], critter: ['f:honeybee', 'f:lady-beetle'] } },
     { id: 'timber', label: 'Timber', def: { bloom: [], leaf: [], critter: [] } },
     { id: 'jungle', label: 'Jungle', def: { bloom: ['f:hibiscus', 'f:lotus', 'f:tulip'], leaf: ['f:herb', 'f:leaf-fluttering-in-wind', 'g:fern', 'g:vine-leaf', 'f:maple-leaf'], critter: ['g:dragonfly', 'f:snail', 'f:bug', 'f:cricket', 'f:beetle'] } },
-    { id: 'ocean', label: 'Ocean', def: { bloom: ['f:coral', 'f:spiral-shell'], leaf: [], critter: [] } },
+    { id: 'ocean', label: 'Ocean', sea: true, def: { bloom: ['f:coral', 'f:spiral-shell'], leaf: [], critter: [] } },
   ],
 };
+// Ocean renames the motions that are about butterflies and wind
+const SEA_MOTIONS = { typed: { sub: 'Type, then fish swim by' }, wind: { label: 'Current', sub: 'A surge sweeps through · 4s' }, scatter: { sub: 'Random growth, bubbles · 6s' }, visit: { sub: 'A jellyfish drifts up · 7s' } };
 const recipeDef = (eng, id) => RECIPES[eng].find(r => r.id === id) || RECIPES[eng][0];
 
 // ---------- state ----------
@@ -365,6 +367,9 @@ function seg(el, value, on) {
 }
 function syncUI() {
   const cw = colourway(S.cw);
+  // Ocean: the butterflies are sea life, petals are bubbles, pollen is marine snow
+  const sea = !!recipeDef(S.engine, S.recipe[S.engine]).sea;
+  $('lFlies').textContent = sea ? 'Sea life' : 'Butterflies'; $('lPetals').textContent = sea ? 'Bubbles' : 'Petals'; $('lSpores').textContent = sea ? 'Marine snow' : 'Pollen';
   seg($('engineSeg'), S.engine, setEngine);
   // recipes
   const rc = $('recipeChips'); rc.innerHTML = '';
@@ -409,7 +414,9 @@ function syncUI() {
   $('pmeta').textContent = `${P.format} · ${mw} × ${mh} mm · 300 dpi · ${(loopT() / 1000).toFixed(1)}s preview loop`;
   $('pExpLabel').textContent = `Export · ${P.format} print${P.bleed ? ' + bleed' : ''}`;
   const mg = $('pMotions'); mg.innerHTML = '';
-  for (const m of MOTIONS) {
+  const seaNames = recipeDef(S.engine, S.recipe[S.engine]).sea ? SEA_MOTIONS : {};
+  for (const m0 of MOTIONS) {
+    const m = { ...m0, ...seaNames[m0.id] };
     const b = document.createElement('button'); b.className = 'card'; b.setAttribute('aria-pressed', String(m.id === P.motion));
     b.innerHTML = `<span>${m.label}</span><span class="sub">${m.sub}</span>`;
     b.onclick = () => { P.motion = m.id; P.playing = true; buildPoster(); syncUI(); saveSoon(); };

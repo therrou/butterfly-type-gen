@@ -104,13 +104,13 @@
       <button class="pill icon" id="setBtn" aria-label="Settings">⚙</button>
       <div class="menu wide" id="setMenu" hidden>
         <label class="row">Density <input type="range" id="sDensity" min="0.3" max="1.8" step="0.05" /></label>
-        <label class="row">Butterflies <input type="range" id="sFlies" min="0" max="12" step="1" /><output id="sFliesOut"></output></label>
+        <label class="row"><span id="lFlies">Butterflies</span> <input type="range" id="sFlies" min="0" max="12" step="1" /><output id="sFliesOut"></output></label>
         <label class="row only3d check"><input type="checkbox" id="sForm" /> Letters form from particles</label>
         <label class="row only3d">Formation <input type="range" id="sFormDur" min="0.5" max="3" step="0.05" /></label>
         <div class="row only3d">Letter reveal <div class="seg" id="sReveal"><button data-v="dissolve">Particles → letter</button><button data-v="pop">Pop</button></div></div>
         <label class="row only3d">Wind <input type="range" id="sWind" min="0" max="1.5" step="0.05" /></label>
-        <label class="row only3d">Petals <input type="range" id="sPetals" min="0" max="2" step="0.05" /></label>
-        <label class="row only3d">Pollen <input type="range" id="sSpores" min="0" max="2" step="0.05" /></label>
+        <label class="row only3d"><span id="lPetals">Petals</span> <input type="range" id="sPetals" min="0" max="2" step="0.05" /></label>
+        <label class="row only3d"><span id="lSpores">Pollen</span> <input type="range" id="sSpores" min="0" max="2" step="0.05" /></label>
         <label class="row only3d">Tilt-shift <input type="range" id="sTilt" min="0" max="2" step="0.05" /></label>
         <label class="row only2d check"><input type="checkbox" id="sBoil" /> Hand-drawn boil</label>
       </div>

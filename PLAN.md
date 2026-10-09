@@ -244,7 +244,24 @@ Changes from the plan:
 - **Species art**: instead of drawing ~15 SVGs by hand, the library uses ~47 free SVGs. Microsoft Fluent Emoji Flat (MIT) supplies the colour illustrations; game-icons.net (CC BY 3.0, credit required) supplies the silhouettes. They are recoloured into the colourways at runtime. The catalogue drawer toggles species per recipe.
 - **No GLB models**: the free CC0/CC-BY low-poly packs (Quaternius, Poly Pizza) were checked but not used. Their faceted style clashes with the references, and SVG cards fit the instanced pipeline better.
 - **2D recipes**: Vines & roses, Meadow (Fluent), Silhouettes (game-icons).
-- **3D recipes**: Moss, Blossom, Jungle.
+- **3D recipes**: Moss, Blossom, Timber, Jungle, Ocean (2D also has Ocean).
 - **Poster motions** run in both engines, as preview only, with a frame scrubber.
 - **Export**: tiled PNG at 300 dpi for both engines; SVG for 2D only.
 - **opentype.js** is pinned to 1.3.4 (2.0.0 produces NaN glyph points).
+
+---
+
+## 12. Ocean recipe (grilling session, 2026-10-09)
+
+| # | Topic | Decision |
+|---|---|---|
+| 1 | Engines | **Both**: a procedural 3D recipe and a card-based 2D recipe, both called **Ocean** |
+| 2 | 3D letters | **A procedural reef**: porous rock base, zones of brain-coral crust, sand on the up-facing ledges, varying inside each letter |
+| 3 | Cast | Kelp, sea grass, branching coral, anemones · seastars, urchins, shells · seahorses, fish schools, jellyfish (in place of the butterflies) · bubbles and marine snow (in place of petals and pollen) |
+| 4 | Colour | **Follows the colourway**: life uses the bloom ramp, kelp the foliage greens shifted to olive; rock and sand get a fixed natural set tinted to the background; fish get small fixed accents; caustics on the letters only (background stays brand-locked) |
+| 5 | Interaction | Click a letter: sea life grows (no flowers) and bubbles burst · empty water: a current surge · pointer: anemones close, fish dart off · tilt: kelp is buoyant and floats up · shake: sand billows |
+| 6 | 2D art | Extend the fetch script (Fluent + game-icons sea sets) and draw the gaps in code (`scripts/draw-sea.mjs`); the new species are in the catalogue for every recipe |
+| 7 | 2D look | Kelp ribbons instead of vines, drawn anemones/coral fans at the tips, fish instead of butterflies, rising bubbles, a stippled rock/sand texture on the letters |
+| 8 | Settings | The same sliders, relabelled in Ocean: *Sea life*, *Bubbles*, *Marine snow*. No glass butterflies in Ocean |
+| 9 | Posters | *Typed* ends with a fish school swimming by, *Visitor* is a jellyfish drifting up, *Gust* is *Current*; the lockup is unchanged; export stays a still |
+| 10 | Not now | Freshwater plants (frogbit, lily pads, duckweed, reeds) stay out of Ocean; a separate **Pond** recipe is a candidate for later |

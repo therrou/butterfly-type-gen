@@ -118,6 +118,7 @@ export class Flock {
   }
   posterPose(tt, P) {
     const all = this.posterPerch || [], poses = [], b = this.bounds();
+    if (this.off) { this.poses = poses; return; } // a recipe without butterflies (Timber, Ocean)
     // typed: the visitor arrives once the word is complete
     if (P.motion === 'typed') { tt -= P.typeEnd + 0.9; if (tt < 0 || tt > 7) { this.poses = poses; return; } }
     if ((P.motion === 'visit' || P.motion === 'typed') && all.length) {

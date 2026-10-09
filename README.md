@@ -6,7 +6,7 @@ Type and the letters overgrow with flora; the film's iridescent butterflies come
 ```bash
 cd butterfly-type
 npm install
-npm run setup   # once: Novo woff2 → ttf, brand images, species SVG library (needs network)
+npm run setup   # once: Novo woff2 → ttf, drawn sea species, species SVG library (needs network)
 npm run dev     # http://localhost:5178
 ```
 
@@ -15,6 +15,7 @@ npm run dev     # http://localhost:5178
 - **2D / 3D**: 2D = illustrated vines (Type Garden lineage, SVG-exportable). 3D = WebGL moss / blossom / jungle (example-1 lineage).
 - **Recipes** (chips) × **Catalogue** (species on/off per recipe; in 2D the hand-drawn rose is a tile too) × **Colourways** (swatches) × **Novo weight**. Selected species are used in turn, so every one you pick shows up. **🎲 Randomize** picks one bloom, one leaf and one critter. ⚙ = density, butterflies, wind, petals, pollen, tilt-shift.
 - **Click (3D, type mode)**: clicking a letter grows a new cluster of blooms (plus catalogue species) that ripples out from the click, bursts petals, sends a pulse through the flora and scatters nearby butterflies; clicking empty space sends a petal gust. Up to 8 clusters per letter.
+- **Ocean (2D + 3D)**: an underwater recipe. *3D*: the letters become reef boulders (porous rock, brain-coral crust, algae, sand on the up-facing ledges, caustic light); kelp floats up from the top edges, with sea grass, staghorn coral, sea fans, anemones (they close when the pointer comes near), urchins, crawling seastars and scallops. Fish schools, seahorses (they hold on to kelp and coral) and jellyfish replace the butterflies; bubbles replace petals, marine snow replaces pollen, and the ⚙ sliders are relabelled *Sea life / Bubbles / Marine snow*. Clicking a letter grows sea life; clicking empty water sends a current surge; on phones kelp floats *up* against gravity and a shake stirs up sand. *2D*: kelp ribbons instead of vines, drawn anemones and coral fans at the tips, sea species on the stems, fish instead of butterflies, rising bubbles, a rock/sand stipple on the letters (all vector, so SVG export keeps it). Posters: *Typed* ends with a fish school swimming by, *Visitor* is a jellyfish, *Gust* is *Current*.
 - **Motion (3D, phones)**: tilt the phone and leaves, hanging stems and falling leaves follow real gravity; shake it to rattle the plants and shed leaves. A one-time card explains it (its *Enable motion* button is the tap iOS needs for sensor permission; needs HTTPS). Posters and exports always hang straight down.
 - **Letter formation (3D, ⚙, off by default)**: when switched on, each new letter starts as particles pulled out of the background blobs (in their colours). *Particles → letter* (default) condenses the letter where they land, then the flora grows; *Pop* scales it in. Formation time 0.5–3 s.
 - **Layout**: the toolbar and content stay centred between the open panels (poster editor on the right, catalogue on the left inside the poster popup). On phones the toolbar is one swipeable row, the poster editor and catalogue are bottom sheets, and tapping the garden opens the keyboard.
@@ -34,7 +35,7 @@ The whole site sits behind a password pop-up (`auth/gate.js`), enforced on the s
 |---|---|
 | `src/main.js` | shell: state (localStorage), dock, catalogue, mode/engine switching, export wiring |
 | `src/garden2d.js` | 2D engine (port of Type Garden: growth, weave, roses, wither/cut, 7 poster motions) + species blooms/leaves/critters + glass butterfly sprites |
-| `src/garden3d/` | 3D engine: `geometry.js` glyph extrude + area sampler + base meshes · `shaders.js` shared growth/wind/pointer prelude + layer shaders + tilt-shift · `recipes.js` moss/blossom/jungle · `flock.js` film butterflies (`src/film/butterflies.js`, copied from `../src`) perch/flee/drift · `index.js` engine, petals, pollen, tiled render |
+| `src/garden3d/` | 3D engine: `geometry.js` glyph extrude + area sampler + base meshes · `shaders.js` shared growth/wind/pointer prelude + layer shaders + tilt-shift · `recipes.js` moss/blossom/timber/jungle/ocean · `flock.js` film butterflies (`src/film/butterflies.js`, copied from `../src`) perch/flee/drift · `sea.js` Ocean swimmers (fish schools, seahorses, jellyfish; same interface as the flock) + bubbles · `index.js` engine, petals, pollen, tiled render |
 | `src/species.js` | species SVG parsing, colourway recolouring, 3D atlas |
 | `src/background.js` | gradient blobs (radial gradients, seam-free), grain |
 | `src/poster.js` | poster grammar/layout, overlay, tiled PNG + SVG export |
@@ -42,7 +43,7 @@ The whole site sits behind a password pop-up (`auth/gate.js`), enforced on the s
 
 ## Assets & licences
 - Novo fonts: SIL OFL (`public/fonts/OFL.txt`). Lockups + glass butterflies: brand assets, internal use only.
-- Species: Microsoft Fluent Emoji Flat (MIT) and game-icons.net (CC BY 3.0, credit Lorc, Delapouite et al.). See `public/species/LICENSES.md`.
+- Species: Microsoft Fluent Emoji Flat (MIT) and game-icons.net (CC BY 3.0, credit Lorc, Delapouite et al.). Sea species neither library has (seahorse, seastar, urchin, anemone, kelp, sea grass, scallop) are drawn in code by `scripts/draw-sea.mjs` into `public/species/drawn/`; an illustrator can swap any of them (plain filled `<path>`s, 32×32 viewBox). See `public/species/LICENSES.md`.
 - Growth mechanics after Type Garden by Akshat Agarwal; 3D techniques after the example-1 generator.
 
 ## Known notes
