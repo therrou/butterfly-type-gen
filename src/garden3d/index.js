@@ -180,10 +180,12 @@ export class Garden3D {
     if (!shapes.length) return g;
     const cw = this.opts.cw, uni = { ...this.U, ...g.U };
     const rec0 = RECIPES3D[this.opts.recipe] || RECIPES3D.blossom, bodyCol = rec0.body ? rec0.body(cw) : cw.type;
-    const sampler = new GlyphSampler(shapes), wood = rec0.wood?.(cw);
+    const sampler = new GlyphSampler(shapes), wood = rec0.wood?.(cw), reef = rec0.reef?.(cw), bark = wood || reef ? this.barkTex(ch, sampler) : null;
     const woodU = { uWood: { value: wood ? 1 : 0 }, uWoodA: { value: col(wood?.light || '#000000') }, uWoodB: { value: col(wood?.dark || '#000000') }, uLichen: { value: col(wood?.lichen || '#000000') },
-      uGrain: { value: new THREE.Vector4(0, 1, 0, (seed % 1000) / 100) }, uBark: { value: wood ? this.barkTex(ch, sampler) : null }, uBarkBox: { value: new THREE.Vector3(...(wood ? this.barkTex(ch, sampler).box : [0, 0, 1])) } };
-    const body = new THREE.Mesh(glyphBody(shapes, rec0.bevel || 0), new THREE.ShaderMaterial({ vertexShader: S.bodyVert, fragmentShader: S.bodyFrag, uniforms: { ...uni, ...woodU, uColor: { value: col(bodyCol) }, uSide: { value: col(mix(bodyCol, cw.bg, 0.45)) }, uGlowCol: { value: col(mix(cw.flower2, '#FFFFFF', 0.5)) } } }));
+      uGrain: { value: new THREE.Vector4(0, 1, 0, (seed % 1000) / 100) }, uBark: { value: bark }, uBarkBox: { value: new THREE.Vector3(...(bark ? bark.box : [0, 0, 1])) } };
+    const reefU = { uReef: { value: reef ? 1 : 0 } };
+    for (const k of ['rockA', 'rockB', 'sand', 'coralA', 'coralB', 'algae', 'caustic']) reefU['u' + k[0].toUpperCase() + k.slice(1)] = { value: col(reef?.[k] || '#000000') };
+    const body = new THREE.Mesh(glyphBody(shapes, rec0.bevel || 0), new THREE.ShaderMaterial({ vertexShader: S.bodyVert, fragmentShader: S.bodyFrag, uniforms: { ...uni, ...woodU, ...reefU, uColor: { value: col(bodyCol) }, uSide: { value: col(mix(bodyCol, cw.bg, 0.45)) }, uGlowCol: { value: col(mix(cw.flower2, '#FFFFFF', 0.5)) } } }));
     g.group.add(body); g.meshes.push(body);
 
     const r = rng(seed), recipe = RECIPES3D[this.opts.recipe] || RECIPES3D.blossom;

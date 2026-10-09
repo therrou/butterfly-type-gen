@@ -342,10 +342,66 @@ vec3 bark(vec3 n){
   c=mix(c,uLichen,lichen*0.6);
   return c*mix(0.4,1.0,ridge)*(0.3+0.95*L);
 }
+// ---- reef: porous rock with zones of brain-coral crust, algae film and sand settled on the up-facing
+// ledges; caustic light ripples over the top. Uses the bark map only for its edge distance (G).
+uniform float uReef; uniform vec3 uRockA; uniform vec3 uRockB; uniform vec3 uSand; uniform vec3 uCoralA; uniform vec3 uCoralB; uniform vec3 uAlgae; uniform vec3 uCaustic;
+uniform float uTime;
+vec2 h22(vec2 p){ return vec2(h21(p),h21(p+19.19)); }
+vec2 cells(vec2 p){ // worley: nearest and second-nearest feature distance
+  vec2 i=floor(p), f=fract(p); float d1=8.0, d2=8.0;
+  for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++){ vec2 g=vec2(float(x),float(y)); float d=length(g+h22(i+g)-f); if(d<d1){ d2=d1; d1=d; } else if(d<d2) d2=d; }
+  return vec2(d1,d2);
+}
+// two drifting, warped cell webs; bright along their seams
+float caustic(vec2 p,float t){
+  vec2 q=p+vec2(vn(p*1.7+t*0.3),vn(p*1.7-t*0.27+7.0))*0.6;
+  vec2 a=cells(q*1.0+vec2(t*0.13,t*0.05)), b=cells(q*1.37-vec2(t*0.07,-t*0.11)+3.0);
+  return pow((1.0-smoothstep(0.0,0.2,a.y-a.x))*(0.5+0.5*vn(p*0.8+t*0.2)),1.5)*0.7+pow(1.0-smoothstep(0.0,0.16,b.y-b.x),2.0)*0.45;
+}
+vec3 reef(vec3 n){
+  vec4 T=texture2D(uBark,(vLocal.xy-uBarkBox.xy)/uBarkBox.z);
+  bool face=n.z>0.6, level=n.z>0.97;
+  vec2 q=(face ? vLocal.xy : vec2(vLocal.x+vLocal.y,vLocal.z))+uGrain.w; // side walls: unrolled along the wall
+  float px=length(dFdx(vLocal.xy))+length(dFdy(vLocal.xy))+1e-6;
+  vec2 gd=vec2(dFdx(T.g),dFdy(T.g))/px;
+  // sand: on walls that face up, and along the face's upper edges (where the edge lies above)
+  float sand=level ? smoothstep(0.35,0.8,-normalize(gd+1e-5).y)*(1.0-smoothstep(0.02,0.35+0.3*vn(q*9.0+4.0),T.g))*smoothstep(0.2,0.5,vn(q*5.0+4.0)+0.15)
+                  : smoothstep(0.35,0.7,n.y)*smoothstep(0.3,0.55,vn(q*10.0+8.0)+0.2);
+  // zones: coral crust in blotches, never on sand
+  float z=vn(q*3.2)*0.7+vn(q*9.0+13.0)*0.3, coral=smoothstep(0.58,0.65,z)*(1.0-sand);
+  // rock: pitted (worley holes) and grainy
+  // pits cluster in porous patches and vary in size; dark crevices wander through at a larger scale
+  vec2 pc=cells(q*30.0); float grain=vn(q*140.0), porous=smoothstep(0.25,0.55,vn(q*7.0+21.0));
+  float pit=(1.0-smoothstep(0.04,0.08+0.2*vn(q*30.0+5.0),pc.x))*porous*step(0.2,h21(floor(q*30.0)));
+  float pore=(1.0-smoothstep(0.05,0.16,cells(q*85.0+9.0).x))*0.6;
+  float crev=1.0-smoothstep(0.0,0.06,abs(vn(q*5.0+3.0)-0.5));
+  float hr=0.5+0.35*vn(q*16.0)+0.2*grain-0.6*pit-0.25*pore-0.4*crev;
+  // brain coral: contour lines of a fine noise field meander and close into short loops, like the
+  // grooves of brain coral; polyp dots along the rims of each patch
+  float F=vn(q*22.0)*0.6+vn(q*47.0+2.0)*0.4, hc=smoothstep(-0.4,0.5,sin(F*22.0));
+  vec2 pp=cells(q*70.0); float polyp=(1.0-smoothstep(0.15,0.28,pp.x))*(1.0-smoothstep(0.0,0.35,abs(z-0.6)/0.06-0.6));
+  float hs=0.5+0.15*grain;
+  float h=mix(mix(hr,hc*0.8+0.1,coral),hs,sand);
+  if(face){ // gently rounded boulder: lean out towards the nearest edge near the rim
+    float dn=clamp(T.g/0.35,0.0,1.0);
+    n=normalize(vec3(-normalize(gd+1e-5)*(1.0-dn)*0.9,0.45+dn));
+  }
+  n=normalize(n+vec3(-vec2(dFdx(h),dFdy(h))/px*0.003,0.0));
+  float L=max(dot(n,uLightDir),0.0);
+  vec3 rock=mix(uRockB,uRockA,clamp(hr,0.0,1.0))*(0.85+0.3*grain);
+  rock=mix(rock,uAlgae*(0.75+0.5*vn(q*60.0)),smoothstep(0.55,0.72,vn(q*4.5+11.0))*0.6*(1.0-pit));
+  vec3 cor=mix(uCoralB*0.45,mix(uCoralA,uCoralB,0.25*vn(q*20.0)),hc);
+  cor=mix(cor,mix(uCoralA,vec3(1.0),0.55),polyp*0.8);
+  vec3 c=mix(mix(rock,cor,coral),uSand*(0.88+0.24*h21(floor(q*400.0))),sand);
+  c*=0.32+0.9*L;
+  float up=face ? 1.0 : smoothstep(-0.2,0.6,n.y);
+  return c+uCaustic*caustic(vLocal.xy*5.0+uGrain.w,uTime*0.6)*0.2*up*(0.4+0.6*L);
+}
 void main(){ ${DISSOLVE}
   vec3 n=normalize(vN);
   vec3 col=n.z>0.6 ? uColor : uSide*(0.7+0.3*abs(n.x));
   if(uWood>0.5) col=bark(n);
+  if(uReef>0.5) col=reef(n);
   if(vReveal<1.0){
     // fine speckle (single landed particles) over soft clumps (where many have gathered)
     float k=vn(vLocal.xy*16.0)*0.5+vn(vLocal.xy*70.0)*0.2+h21(floor(vLocal.xy*320.0))*0.3;

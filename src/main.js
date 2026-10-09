@@ -19,6 +19,7 @@ const RECIPES = {
     { id: 'blossom', label: 'Blossom', def: { bloom: ['f:cherry-blossom', 'f:blossom', 'f:hibiscus', 'f:white-flower'], leaf: ['f:leaf-fluttering-in-wind'], critter: ['f:honeybee', 'f:lady-beetle'] } },
     { id: 'timber', label: 'Timber', def: { bloom: [], leaf: [], critter: [] } },
     { id: 'jungle', label: 'Jungle', def: { bloom: ['f:hibiscus', 'f:lotus', 'f:tulip'], leaf: ['f:herb', 'f:leaf-fluttering-in-wind', 'g:fern', 'g:vine-leaf', 'f:maple-leaf'], critter: ['g:dragonfly', 'f:snail', 'f:bug', 'f:cricket', 'f:beetle'] } },
+    { id: 'ocean', label: 'Ocean', def: { bloom: [], leaf: [], critter: [] } },
   ],
 };
 const recipeDef = (eng, id) => RECIPES[eng].find(r => r.id === id) || RECIPES[eng][0];

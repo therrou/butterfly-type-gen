@@ -182,6 +182,14 @@ export const RECIPES3D = {
       if (r() < 0.5) caterpillar({ r, cw, add, inside: null }, pts[0].pos, 0.4);
     },
   },
+  // letters as reef boulders: porous rock with zones of coral crust and algae, sand on the up-facing ledges,
+  // caustic light over the top (shaders.js reef). Sea life and swimmers grow on them.
+  ocean: {
+    label: 'Ocean', petals: { rate: 0, size: 0.02 }, spores: 0.6, height: 1, bevel: 0.014, butterflies: false,
+    reef: cw => ({ rockA: mix('#9A968C', cw.bg, 0.14), rockB: mix('#2A2730', cw.bg, 0.18), sand: mix('#E8D6AC', cw.bg, 0.08),
+      coralA: cw.flower, coralB: cw.flowerDeep, algae: mix(cw.foliage[1], '#6E7A2E', 0.4), caustic: mix(cw.flower2, '#FFFFFF', 0.6) }),
+    build() {},
+  },
 };
 const DRY = ['#C98A3A', '#A5532A', '#7A4A2A', '#D9B26A', '#8E5B2E'];
 const CATER = cw => [[mix('#7DBF3A', cw.foliage[1], 0.3), mix('#B8D84A', cw.foliage[2], 0.3), '#3A2A12'], ['#E07A1F', '#22160E', '#1A120C'], [mix('#5FA83A', cw.foliage[1], 0.2), '#E8C33A', '#2A1D15']];
