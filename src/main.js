@@ -19,7 +19,7 @@ const RECIPES = {
     { id: 'blossom', label: 'Blossom', def: { bloom: ['f:cherry-blossom', 'f:blossom', 'f:hibiscus', 'f:white-flower'], leaf: ['f:leaf-fluttering-in-wind'], critter: ['f:honeybee', 'f:lady-beetle'] } },
     { id: 'timber', label: 'Timber', def: { bloom: [], leaf: [], critter: [] } },
     { id: 'jungle', label: 'Jungle', def: { bloom: ['f:hibiscus', 'f:lotus', 'f:tulip'], leaf: ['f:herb', 'f:leaf-fluttering-in-wind', 'g:fern', 'g:vine-leaf', 'f:maple-leaf'], critter: ['g:dragonfly', 'f:snail', 'f:bug', 'f:cricket', 'f:beetle'] } },
-    { id: 'ocean', label: 'Ocean', def: { bloom: [], leaf: [], critter: [] } },
+    { id: 'ocean', label: 'Ocean', def: { bloom: ['f:coral', 'f:spiral-shell'], leaf: [], critter: [] } },
   ],
 };
 const recipeDef = (eng, id) => RECIPES[eng].find(r => r.id === id) || RECIPES[eng][0];
@@ -471,7 +471,7 @@ function renderCatalogue() {
   $('drawerFor').textContent = `Species growing in “${r.label}” (${S.engine.toUpperCase()}). Tap to add or remove; the garden regrows with your selection.`;
   const root = $('catalogue'); root.innerHTML = '';
   const items = catalogueItems();
-  for (const [kind, title] of [['bloom', 'Blooms'], ['leaf', 'Leaves & fungi'], ['critter', 'Critters']]) {
+  for (const [kind, title] of [['bloom', 'Blooms, corals & shells'], ['leaf', 'Leaves, fungi & seaweed'], ['critter', 'Critters & sea life']]) {
     const list = items.filter(it => it.kind === kind), on = list.filter(it => sel.has(it.id)).length;
     const sec = document.createElement('div'); sec.className = 'cat'; sec.innerHTML = `<h4>${title} <span class="muted">· ${on} of ${list.length}</span></h4><div class="tiles"></div>`;
     for (const it of list) {

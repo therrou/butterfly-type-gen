@@ -1,8 +1,9 @@
 // Species library: downloaded SVG illustrations (see scripts/fetch-species.mjs), parsed once into
 // paths + fills, then recoloured into the active colourway. One drawing serves every colourway.
 //   bloom   → flower heads (stem tips in 2D, cards on the letters in 3D)
-//   leaf    → foliage, sprouts, mushrooms
-//   critter → insects that perch on stems / walk the letters
+//   leaf    → foliage, sprouts, mushrooms, kelp, sea grass
+//   critter → insects that perch on stems / walk the letters; sea creatures
+// (bloom also covers corals, shells and anemones)
 import { hsl, mix, T } from './brand.js';
 
 let LIB = [];
@@ -87,9 +88,9 @@ export function speciesSVG(sp, x, y, size, rot, cw, opts = {}) {
   return `<g transform="${tr}"${op}>${sp.parts.map((p, i) => `<path d="${p.d}" fill="${opts.mono || F[i]}"${p.rule !== 'nonzero' ? ` fill-rule="${p.rule}"` : ''}/>`).join('')}</g>`;
 }
 
-// Texture atlas for the 3D cards: 8×8 cells of 256px, rebuilt per colourway.
+// Texture atlas for the 3D cards: a square grid sized to the library in a 2048px canvas, rebuilt per colourway.
 export function buildAtlas(cw, tint) {
-  const N = 8, C = 256, c = document.createElement('canvas');
+  const N = Math.max(8, Math.ceil(Math.sqrt(LIB.length))), C = Math.floor(2048 / N), c = document.createElement('canvas');
   c.width = c.height = N * C;
   const g = c.getContext('2d'), uv = new Map();
   LIB.forEach((sp, i) => {

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "setup": "node scripts/fonts.mjs && node scripts/fetch-species.mjs",
+    "setup": "node scripts/fonts.mjs && node scripts/draw-sea.mjs && node scripts/fetch-species.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

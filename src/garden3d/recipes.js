@@ -232,6 +232,7 @@ export const RECIPES3D = {
       }
       for (let k = 0, n = Math.max(r() < 0.55 ? 1 : 0, c.count(0.7, 0)); k < n; k++) seastar(c, c.delay(new THREE.Vector3(), 0.9));
       for (let k = 0, n = c.count(0, 0.7); k < n; k++) { const p = rim(nm => nm.y > 0.5); scallop(c, p.pos.clone(), new THREE.Vector3(p.normal.x * 0.2, 1, 0.5).normalize(), c.delay(p.pos, 0.7)); }
+      c.cards({ bloom: 5, leaf: 2, critter: 0.3 }); // catalogue species (corals and shells by default)
     },
     // click on a letter: a ring of sea grass, anemones and urchins, a coral sprig and a couple of kelp sprouts
     spot({ r, cw, pts, R, add }) {
