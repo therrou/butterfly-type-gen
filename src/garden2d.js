@@ -4,6 +4,10 @@
 // butterflies from the film, and a poster box of any size (A-series) instead of a 1080 square.
 import { getSpecies, drawSpecies, speciesSVG } from './species.js';
 import { glyphPathData } from './fonts.js';
+import { mix } from './brand.js';
+
+// Ocean (recipe.sea): the swimmers that stand in for the glass butterflies; Fluent fish face left
+const FISH = ['f:tropical-fish', 'f:fish', 'f:blowfish'];
 
 export const VISIT_MS = 7000; // the visitor butterfly's flight (arrive, perch, hop, perch, leave)
 export const ROSE = 'v:rose'; // the vector rose, offered as a catalogue item in 2D
@@ -87,7 +91,8 @@ export class Garden2D {
       rect: (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); },
       text: (ch, x, y, S, col) => { g.font = this.font(S); g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = col; g.fillText(ch, x, y); },
       species: (sp, x, y, size, rot, opts) => drawSpecies(g, sp, x, y, size, rot, this.opts.cw, opts),
-      fly: (x, y, w, ang, o, alpha) => {
+      fly: (x, y, w, ang, o, alpha, who) => {
+        if (this.recipe().sea) { const f = this.fish(w, ang, o, who); return drawSpecies(g, f.sp, x, y, f.size, f.rot, this.opts.cw, { flip: f.flip, alpha }); }
         if (!SPR.ok) return;
         const h = w * SPR.ar, half = w / 2, k = 0.12 + 0.88 * o;
         g.save(); g.translate(x, y); g.rotate(ang); g.globalAlpha *= alpha ?? 1;
@@ -109,7 +114,8 @@ export class Garden2D {
       rect: (x, y, w, h, col) => parts.push(`<rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" fill="${col}"/>`),
       text: (ch, x, y, S, col) => parts.push(`<path d="${glyphPathData(ch, x, y, S, this.opts.weight)}" fill="${col}"${op()}/>`),
       species: (sp, x, y, size, rot, opts) => parts.push(speciesSVG(sp, x, y, size, rot, this.opts.cw, { ...opts, alpha: (opts?.alpha ?? 1) * alpha })),
-      fly: (x, y, w, ang, o) => {
+      fly: (x, y, w, ang, o, a2, who) => {
+        if (this.recipe().sea) { const f = this.fish(w, ang, o, who); return parts.push(speciesSVG(f.sp, x, y, f.size, f.rot, this.opts.cw, { flip: f.flip, alpha })); }
         if (!SPR.ok) return;
         const h = w * SPR.ar, half = w / 2, k = 0.12 + 0.88 * o;
         parts.push(`<g transform="translate(${n(x)} ${n(y)}) rotate(${n(ang * 180 / Math.PI)})"${op()}><image href="${SPR.Lurl}" x="${n(-half * k)}" y="${n(-h / 2)}" width="${n(half * k)}" height="${n(h)}" preserveAspectRatio="none"/><image href="${SPR.Rurl}" x="0" y="${n(-h / 2)}" width="${n(half * k)}" height="${n(h)}" preserveAspectRatio="none"/></g>`);
@@ -117,7 +123,13 @@ export class Garden2D {
       alpha: a => { alpha = a; },
     };
   }
-  get C() { const c = this.opts.cw; return { red: c.flower, blue: c.stem, line: c.line, text: c.type, vein: c.bg }; }
+  get C() { const c = this.opts.cw; return { red: c.flower, blue: this.recipe().sea ? mix(c.foliage[1], '#8A6A24', 0.5) : c.stem, line: c.line, text: c.type, vein: c.bg }; }
+  // a fish in place of a butterfly: who = { seed, dir } picks the species and which way it faces; the wing
+  // beat `o` becomes a tail wiggle
+  fish(w, ang, o, who = {}) {
+    const sp = getSpecies(FISH[Math.floor((who.seed || 0) * 7) % FISH.length]) || getSpecies(FISH[0]);
+    return { sp, size: w * 0.85, rot: ang * 0.4 + (o - 0.5) * 0.14, flip: (who.dir || 1) > 0 };
+  }
 
   vine(base, dir, len, amp, waves, ph, bend, n) {
     n = n || 40; const P = [[base[0], base[1]]], step = len / n; let x = base[0], y = base[1];
@@ -277,13 +289,17 @@ export class Garden2D {
   }
   cycle(list, key) { this[key] = (this[key] || 0) + 1; return list[this[key] % list.length]; }
   grow(r, E, nid, p, o) {
+    const sea = this.recipe().sea;
+    if (sea && !o.pts && Math.sin(o.dir) > 0.2) o = { ...o, dir: -o.dir }; // kelp is buoyant: nothing hangs down
     let tip = o.tip || (r() < p.roseP ? 'rose' : r() < 0.45 ? 'fan' : r() < 0.6 ? 'leaf' : 'curl');
+    if (sea && tip === 'curl') tip = 'leaf';
     if (tip === 'rose' && !this.recipe().blooms.length) tip = 'fan'; // catalogue "None": no blooms at all
     let P = o.pts || this.vine(o.base, o.dir, o.len, (0.35 + r() * 0.45) * p.curvy, 1 + r() * 1.6, r() * 6.28, (r() - 0.5) * 1.2, 40);
+    if (sea) { const lift = (o.len || 0.8) * 0.55, n = P.length - 1; P = P.map((q, i) => [q[0], q[1] - (i / n) * (i / n) * lift]); } // buoyant: the stalk bends up as it grows
     if (tip === 'curl') P = this.curl(P, r() < 0.5 ? -1 : 1, 0.05 + r() * 0.05);
     const segs = this.weave(r, o.layer0 != null ? o.layer0 : (r() < 0.5 ? 0 : 1));
     const dur = Math.max(320, (o.len || 0.8) * 620);
-    const thorns = []; const nt = Math.floor(r() * 2.5);
+    const thorns = []; const nt = sea ? 0 : Math.floor(r() * 2.5);
     for (let i = 0; i < nt; i++) thorns.push({ u: 0.15 + r() * 0.65, s: r() < 0.5 ? -1 : 1 });
     E.push({ t: 'stem', id: nid(), pts: P, segs, d0: o.d0, dur, w: o.depth ? 0.82 : 1, thorns });
     const R = this.recipe();
@@ -362,6 +378,16 @@ export class Garden2D {
     pts.push(lerp(ib));
     if (pts.length >= 2) B.stroke(pts, col, w);
   }
+  // kelp stipe: a filled ribbon from u = a to b, tapering up the stalk with a slightly wavy edge
+  ribbon(B, P, a, b, col, w, id) {
+    const n = P.length - 1, L = [], Rt = [];
+    for (let i = Math.max(0, Math.floor(a * n)); i <= Math.min(n, Math.ceil(b * n)); i++) {
+      const u = i / n, p = P[i], q = P[Math.min(n, i + 1)], o = P[Math.max(0, i - 1)], dx = q[0] - o[0], dy = q[1] - o[1], d = Math.hypot(dx, dy) || 1;
+      const hw = w * (1 - 0.45 * u) * (1 + 0.28 * Math.sin(u * 38 + id));
+      L.push([p[0] - dy / d * hw, p[1] + dx / d * hw]); Rt.push([p[0] + dy / d * hw, p[1] - dx / d * hw]);
+    }
+    if (L.length >= 2) B.fill([...L, ...Rt.reverse()], col);
+  }
   thorn(B, P, u, s, S) {
     const [p, a] = this.at(P, u), d = a + s * 2.3, L = S * 0.045;
     B.stroke([p, [p[0] + Math.cos(d) * L, p[1] + Math.sin(d) * L]], this.cc.blue, S * 0.022);
@@ -370,7 +396,8 @@ export class Garden2D {
     if (L < 0.5) return;
     const ca = Math.cos(a), sa = Math.sin(a), px = -sa, py = ca;
     const ax = u => { const b = Math.sin(Math.PI * u) * bend * 0.15 * L; return [bx + ca * u * L + px * b, by + sa * u * L + py * b]; };
-    const hw = u => L * 0.18 * Math.sin(Math.PI * Math.pow(u, 0.8));
+    const sea = this.recipe().sea; if (sea) L *= 1.35; // kelp blades: longer, narrower, ruffled
+    const hw = sea ? u => L * 0.11 * Math.sin(Math.PI * Math.pow(u, 0.6)) * (1 + 0.25 * Math.sin(u * 30)) : u => L * 0.18 * Math.sin(Math.PI * Math.pow(u, 0.8));
     const N = 12, s1 = [], s2 = [];
     for (let i = 0; i <= N; i++) { const u = i / N, c = ax(u), w = hw(u); s1.push([c[0] + px * w, c[1] + py * w]); s2.push([c[0] - px * w, c[1] - py * w]); }
     const tip = ax(1), base = ax(0);
@@ -489,7 +516,7 @@ export class Garden2D {
         if (f.st === 'fly' && d < 5) { f.st = 'sit'; f.ph = 0; }
         if (f.st === 'leave' && (f.x < -90 || f.x > this.W + 90 || f.y < -90)) return false;
       }
-      B.fly(f.x, f.y, f.sz, f.ang, f.open);
+      B.fly(f.x, f.y, f.sz, f.ang, f.open, 1, { seed: f.seed % 1, dir: f.vx || (f.x < this.W / 2 ? 1 : -1) });
       return true;
     });
   }
@@ -543,8 +570,79 @@ export class Garden2D {
       }
     };
     draw(0);
-    for (const l of L) if (l.ch !== ' ' && (st.textAll || !l.dead)) B.text(l.ch, l.x, l.y, S, st.C.text);
+    const sea = this.recipe().sea;
+    for (const l of L) if (l.ch !== ' ' && (st.textAll || !l.dead)) { B.text(l.ch, l.x, l.y, S, st.C.text); if (sea) this.stipple(B, l, S); }
     draw(1);
+    if (sea) this.bubbles(B, st, now);
+  }
+  // ---- Ocean ----
+  // rock and sand texture: fixed dots inside the glyph (vector, so the SVG export keeps it). Sampled once per
+  // glyph and weight in em units: dark pits all over, sand grains settled towards the top of each stroke.
+  stipple(B, l, S) {
+    const key = l.ch + '|' + this.opts.weight, cw = this.opts.cw;
+    let D = (this.dots ||= {})[key];
+    if (!D) {
+      const path = new Path2D(glyphPathData(l.ch, 0, 0, 100, this.opts.weight)), r = this.rng(key.length * 977 + l.ch.charCodeAt(0)), g = this.mctx;
+      D = [];
+      for (let i = 0; i < 900 && D.length < 95; i++) {
+        const x = (r() - 0.5) * 110, y = -r() * 100 + 5;
+        if (!g.isPointInPath(path, x, y)) continue;
+        const up = !g.isPointInPath(path, x, y - 6); // just under an upper edge: sand collects there
+        D.push([x / 100, y / 100, up ? 1 : 0, 0.004 + r() * (up ? 0.006 : 0.009)]);
+      }
+      this.dots[key] = D;
+    }
+    const pit = mix(cw.type, cw.bg, 0.3), sand = mix('#E8D6AC', cw.type, 0.2);
+    for (const [x, y, up, rr] of D) {
+      const cx = l.x + x * S, cy = l.y + y * S, R0 = rr * S, pts = [];
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; pts.push([cx + Math.cos(a) * R0, cy + Math.sin(a) * R0]); }
+      B.fill(pts, up ? sand : pit);
+    }
+  }
+  // bubbles rise off each grown letter: analytic in time (so a poster frame reproduces), a ring with a highlight
+  bubbles(B, st, now) {
+    const S = st.S, col = mix(this.opts.cw.flower2, '#FFFFFF', 0.6);
+    for (const l of st.letters) {
+      if (l.ch === ' ' || l.dead || l.birth == null || (now - l.birth) * (st.speed || 1) < 900) continue;
+      for (let k = 0; k < 3; k++) {
+        const h = n => this.h(l.id * 13.1 + k * 7.7 + n), per = 3.2 + h(1) * 2.4, u = ((now / 1000) / per + h(2)) % 1;
+        const x = l.x + (h(3) - 0.5) * (l.tw || S * 0.5) * 0.8 + Math.sin(u * 11 + h(4) * 6) * S * 0.03, y = l.y - S * 0.25 - u * S * 2.2;
+        const r = S * (0.016 + h(5) * 0.02) * (0.8 + 0.4 * u), ring = [];
+        for (let i = 0; i <= 18; i++) { const a = i / 18 * Math.PI * 2; ring.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); }
+        B.alpha(Math.min(1, u * 8) * (1 - Math.pow(u, 3)));
+        B.stroke(ring, col, Math.max(0.7, r * 0.18));
+        const hl = []; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; hl.push([x - r * 0.38 + Math.cos(a) * r * 0.22, y - r * 0.38 + Math.sin(a) * r * 0.22]); }
+        B.fill(hl, col);
+        B.alpha(1);
+      }
+    }
+  }
+  // the procedural sea bloom at a stem tip: an anemone (a crown of waving tentacles with pale tips on a short
+  // column) or a branching coral fan, picked per element
+  seaBloom(B, cx, cy, R, rot, e, a) {
+    const s = Math.min(1, this.spr(a / 1000, 6, 10)), cw = this.opts.cw, t = (this._now || 0) / 1000;
+    if (s <= 0.01 || R < 1) return;
+    if (this.h(e.id * 3.1) < 0.55) {
+      const deep = mix(cw.flowerDeep, '#3A1A2A', 0.25), col = this.h(e.id * 5.3) < 0.6 ? cw.flower : cw.flower2, tip = mix(cw.flower2, '#FFFFFF', 0.6), n = 11;
+      for (let i = 0; i < n; i++) {
+        const u = i / (n - 1) - 0.5, ang = -Math.PI / 2 + rot + u * 2.4 + Math.sin(t * 1.3 + i * 0.8 + e.id) * 0.12, len = R * (0.75 + 0.35 * (1 - Math.abs(u) * 1.4)) * s;
+        const bx = cx + u * R * 0.5, by = cy - R * 0.1, pts = [];
+        for (let k = 0; k <= 6; k++) { const v = k / 6, aa = ang + u * v * 0.9 + Math.sin(t * 1.7 + i + v * 3) * 0.1 * v; pts.push([bx + Math.cos(aa) * len * v, by + Math.sin(aa) * len * v]); }
+        B.stroke(pts, col, Math.max(0.8, R * 0.075 * (1 - Math.abs(u) * 0.4)));
+        const ep = pts[pts.length - 1], dot = []; for (let k = 0; k < 7; k++) { const q = k / 7 * Math.PI * 2; dot.push([ep[0] + Math.cos(q) * R * 0.06, ep[1] + Math.sin(q) * R * 0.06]); }
+        B.fill(dot, tip);
+      }
+      const col0 = []; for (let k = 0; k < 14; k++) { const q = k / 14 * Math.PI * 2; col0.push([cx + Math.cos(q) * R * 0.32, cy + R * 0.12 + Math.sin(q) * R * 0.26]); }
+      B.fill(col0, deep);
+    } else {
+      const r = this.rng(e.id * 131 + 7), col = this.h(e.id * 7.7) < 0.5 ? cw.flower : cw.flowerDeep;
+      const br = (x, y, ang, len, w, d) => {
+        const ex = x + Math.cos(ang) * len * s, ey = y + Math.sin(ang) * len * s, mx = (x + ex) / 2 + Math.cos(ang + 1.57) * len * 0.12, my = (y + ey) / 2 + Math.sin(ang + 1.57) * len * 0.12;
+        B.stroke([[x, y], [mx, my], [ex, ey]], col, Math.max(0.7, w));
+        if (d < 3) for (let k = 0; k < 2; k++) br(ex, ey, ang + (k ? 1 : -1) * (0.35 + r() * 0.35), len * (0.6 + r() * 0.2), w * 0.7, d + 1);
+      };
+      for (let k = 0; k < 3; k++) br(cx, cy + R * 0.3, -Math.PI / 2 + rot + (k - 1) * 0.55, R * 0.55, R * 0.09, 0);
+    }
   }
   wpt(st, l, x, y) {
     if (l.birth != null && this._now != null) {
@@ -554,6 +652,10 @@ export class Garden2D {
         x += st.S * 0.07 * hh * dmp * Math.sin(t * 11) * dir;
         y += st.S * 0.035 * hh * dmp * Math.sin(t * 11 + 1.2);
       }
+    }
+    if (this.recipe().sea && this._now != null) { // the current: everything above the letter sways, more the higher up
+      const hh = Math.max(0, (l.y - y) / st.S);
+      x += Math.sin(this._now / 1000 * 0.9 + hh * 1.6 + l.id * 0.7) * st.S * 0.045 * hh;
     }
     if (st.face && l.lean) {
       const hh = Math.min(2.5, Math.max(0, (l.y - y) / st.S)), f = hh * hh * 0.5 + hh * 0.5;
@@ -569,7 +671,8 @@ export class Garden2D {
     for (const sg of e.segs) {
       if (sg.layer !== layer) continue;
       const b = Math.min(sg.u1, fr); if (b <= sg.u0) continue;
-      this.strokeRange(B, P, sg.u0, b, st.C.blue, S * 0.022 * (e.w || 1));
+      if (this.recipe().sea) this.ribbon(B, P, sg.u0, b, st.C.blue, S * 0.026 * (e.w || 1), e.id);
+      else this.strokeRange(B, P, sg.u0, b, st.C.blue, S * 0.022 * (e.w || 1));
     }
     for (const th of e.thorns) if (fr > th.u && this.layerAt(e.segs, th.u) === layer) this.thorn(B, P, th.u, th.s, S);
   }
@@ -590,10 +693,11 @@ export class Garden2D {
       if (e.sp) {
         const sc = this.spr(a / 1000, 7, 13);
         B.species(getSpecies(e.sp), p[0], p[1], e.R * S * kk * 2.3 * sc, rot);
-      } else this.rose(B, p[0], p[1], e.R * S * kk, rot, e, a, tl);
+      } else if (this.recipe().sea) this.seaBloom(B, p[0], p[1], e.R * S * kk, rot, e, a);
+      else this.rose(B, p[0], p[1], e.R * S * kk, rot, e, a, tl);
     } else if (e.t === 'critter') {
       const a = age - e.d0; if (a < 0 || kk <= 0.01) return;
-      const sc = this.eo(a / 500) * kk, sp = getSpecies(e.sp), flyer = /dragonfly|bee|honeybee|butterfly/.test(e.sp);
+      const sc = this.eo(a / 500) * kk, sp = getSpecies(e.sp), flyer = /dragonfly|bee|honeybee|butterfly|fish|jellyfish|seahorse/.test(e.sp);
       const hov = flyer ? [Math.sin(a / 1000 * 1.7 + e.hover * 6) * S * 0.06, -S * 0.22 + Math.sin(a / 1000 * 2.9 + e.hover * 9) * S * 0.04] : [0, -e.L * S * 0.35];
       const p = wx(e.x, e.y);
       B.species(sp, p[0] + hov[0], p[1] + hov[1], e.L * S * 1.4 * sc, flyer ? Math.sin(a / 600) * 0.08 : e.a + Math.PI / 2 + rw, { flip: e.flip, alpha: Math.min(1, sc * 1.4) });
@@ -662,12 +766,12 @@ export class Garden2D {
     let o, ang;
     if (flying) { o = Math.abs(Math.cos(t * 17)); p = [p[0] + Math.sin(t * 7) * 6, p[1] + Math.sin(t * 13) * 4]; ang = vx * 0.3; }
     else { const burst = (t > 2.4 && t < 2.8) || (t > 5 && t < 5.3); o = burst ? 0.2 + 0.8 * Math.abs(Math.cos(t * 9)) : 0.55 + 0.1 * Math.sin(t * 3); ang = 0; }
-    B.fly(p[0], p[1], sz, ang, o);
+    B.fly(p[0], p[1], sz, ang, o, 1, { seed: 0.1, dir: flying ? vx : 1 });
   }
   // static butterflies for non-visitor posters: perched on the first N blooms, wings mid-open
   posterPerched(B, tt, n) {
     const ps = this.perch.slice().sort((a, b) => this.h(a.id) - this.h(b.id)).slice(0, n);
-    for (const p of ps) { const o = 0.55 + 0.25 * Math.sin(tt / 1000 * 1.2 + p.id); B.fly(p.x + p.R * 0.05, p.y - p.R * 0.45, Math.max(26, this.P.S * 0.5) * (0.8 + 0.4 * this.h(p.id * 3)), (this.h(p.id) - 0.5) * 0.5, o); }
+    for (const p of ps) { const o = 0.55 + 0.25 * Math.sin(tt / 1000 * 1.2 + p.id); B.fly(p.x + p.R * 0.05, p.y - p.R * 0.45, Math.max(26, this.P.S * 0.5) * (0.8 + 0.4 * this.h(p.id * 3)), (this.h(p.id) - 0.5) * 0.5, o, 1, { seed: this.h(p.id * 5), dir: this.h(p.id * 7) < 0.5 ? 1 : -1 }); }
   }
   posterDraw(B, t) {
     const P = this.P; if (!P) return;

@@ -13,6 +13,7 @@ const RECIPES = {
     { id: 'vines', label: 'Vines & roses', roses: 0.6, leafP: 0.3, critterP: 0.3, def: { bloom: [ROSE, 'g:rose', 'g:daisy', 'g:flower-twirl'], leaf: ['g:vine-leaf', 'g:fern'], critter: ['g:dragonfly', 'g:ladybug', 'g:caterpillar', 'g:snail'] } },
     { id: 'meadow', label: 'Meadow', roses: 0.15, leafP: 0.5, critterP: 0.35, def: { bloom: [ROSE, 'f:cherry-blossom', 'f:hibiscus', 'f:tulip', 'f:blossom', 'f:white-flower', 'f:sunflower'], leaf: ['f:herb', 'f:leaf-fluttering-in-wind', 'f:shamrock', 'f:seedling'], critter: ['f:lady-beetle', 'f:snail', 'f:honeybee', 'f:bug'] } },
     { id: 'silhouette', label: 'Silhouettes', roses: 0.5, leafP: 0.5, critterP: 0.35, def: { bloom: ['g:daisy', 'g:rose', 'g:lotus-flower', 'g:sunflower', 'g:flower-twirl', 'g:vine-flower'], leaf: ['g:fern', 'g:vine-leaf', 'g:oak-leaf', 'g:linden-leaf', 'g:sprout'], critter: ['g:dragonfly', 'g:caterpillar', 'g:ladybug', 'g:bee', 'g:snail'] } },
+    { id: 'ocean', label: 'Ocean', sea: true, roses: 0.55, leafP: 0.35, critterP: 0.3, def: { bloom: [ROSE, 'f:coral', 'f:spiral-shell', 'd:anemone', 'd:scallop'], leaf: ['d:kelp', 'd:sea-grass'], critter: ['d:seastar', 'd:seahorse', 'd:sea-urchin', 'f:tropical-fish'] } },
   ],
   '3d': [
     { id: 'moss', label: 'Moss', def: { bloom: ['f:white-flower', 'f:blossom', 'f:cherry-blossom'], leaf: ['f:mushroom', 'f:seedling', 'f:four-leaf-clover'], critter: ['f:lady-beetle', 'f:snail', 'f:bug'] } },
@@ -53,7 +54,7 @@ function engineOpts() {
   if (S.engine === '2d') {
     const ofk = k => sel.filter(id => (id === ROSE ? 'bloom' : getSpecies(id)?.kind) === k);
     g2.setOpts({ weight: S.weight['2d'], density: S.density, butterflies: S.butterflies, boil: S.boil, cw,
-      recipe: { roses: r.roses, leafP: r.leafP, critterP: r.critterP, blooms: ofk('bloom'), leaves: ofk('leaf'), critters: ofk('critter') } });
+      recipe: { roses: r.roses, leafP: r.leafP, critterP: r.critterP, sea: !!r.sea, blooms: ofk('bloom'), leaves: ofk('leaf'), critters: ofk('critter') } });
   } else {
     g3.setOpts({ weight: S.weight['3d'], density: S.density, butterflies: S.butterflies, recipe: r.id, cw, species: sel, wind: S.wind, petals: S.petals, spores: S.spores, tilt: S.tilt, form: S.form, formDur: S.formDur, reveal: S.reveal });
   }
@@ -451,7 +452,7 @@ function relayout() { clearTimeout(rl); rl = setTimeout(() => { buildPoster(); s
 // the hand-drawn rose (2D only) is offered as a catalogue item next to the downloaded species
 function catalogueItems() {
   const items = species().map(sp => ({ id: sp.id, kind: sp.kind, name: sp.name.replace(/-/g, ' '), sp }));
-  if (S.engine === '2d') items.unshift({ id: ROSE, kind: 'bloom', name: 'hand-drawn rose', sp: null });
+  if (S.engine === '2d') items.unshift({ id: ROSE, kind: 'bloom', name: recipeDef('2d', S.recipe['2d']).sea ? 'drawn anemones & coral' : 'hand-drawn rose', sp: null });
   return items;
 }
 function roseThumb(cw) {
