@@ -61,22 +61,25 @@ function engineOpts() {
 // ---------- type view ----------
 const tbg = $('tbg'), tx = tbg.getContext('2d');
 const typeView = $('typeView');
+// Touch: the garden keeps the tallest viewport height seen at this width (--stable-h on #typeView), so an
+// on-screen keyboard or a reappearing URL bar never resizes the canvas, background or fit (Chrome Android
+// can shrink the layout viewport for the keyboard despite interactive-widget=resizes-visual). The part the
+// keyboard covers just runs off-screen behind it; keyboardLift keeps the typed line visible. A width change
+// (rotation) starts a new measurement.
 let stable = { w: 0, h: 0 };
-function stableHeight(W, H) {
-  const full = Math.max(H, innerHeight, document.documentElement.clientHeight);
-  if (Math.abs(W - stable.w) > 2) stable = { w: W, h: full };
+function stableHeight() {
+  const w = innerWidth, full = Math.max(innerHeight, document.documentElement.clientHeight);
+  if (Math.abs(w - stable.w) > 2) stable = { w, h: full };
   else stable.h = Math.max(stable.h, full);
+  document.documentElement.style.setProperty('--stable-h', stable.h + 'px');
   return stable.h;
 }
 function sizeType() {
+  if (coarse) stableHeight();
   const W = typeView.clientWidth || innerWidth, H = typeView.clientHeight || innerHeight, d = Math.min(2, devicePixelRatio || 1);
   tbg.width = W * d; tbg.height = H * d;
   c2.width = W * d; c2.height = H * d; c2.style.width = W + 'px'; c2.style.height = H + 'px';
-  // Line breaking uses the tallest height seen at this width, so the on-screen keyboard (which shrinks
-  // the visible area, and on iOS / Firefox / Samsung Internet also innerHeight) never re-wraps the words;
-  // W×H, the visible area, is only used to fit. A width change (rotation) starts a new measurement.
-  const layoutH = coarse ? stableHeight(W, H) : H;
-  g2.layoutH = layoutH; g3.view.layoutH = layoutH;
+  g2.layoutH = H; g3.view.layoutH = H;
   g2.topPad = coarse ? Math.max(0, document.querySelector('.dock').getBoundingClientRect().bottom - typeView.getBoundingClientRect().top + 8) : 0;
   g2.resize(W, H);
   if (S.mode === 'type') g3.setSize(W, H, d);
@@ -163,7 +166,8 @@ if (location.hash === '#motion') {
   document.body.appendChild(box);
   setInterval(() => {
     const f = v => v == null ? '–' : (+v).toFixed(1), G = g3.grav, R = G.raw;
-    box.textContent = `touch ${coarse} · motion ${motionOn ? 'on' : 'off'} · permission ${MD.perm}\norientation events ${MD.orient} · motion events ${MD.motion}\nβ ${f(MD.beta)}  γ ${f(MD.gamma)}  screen ${f(screen.orientation?.angle ?? window.orientation)}\nin-screen gravity ${R ? f(R.sx * 10) + ', ' + f(R.sy * 10) + ' · ' + f(R.len * 100) + '%' : '–'}\ntilt ${f(G.target * 180 / Math.PI)}° → ${f(G.angle * 180 / Math.PI)}°`;
+    const tv = typeView.getBoundingClientRect();
+    box.textContent = `viewport: inner ${innerHeight} · garden ${Math.round(tv.top)}+${Math.round(tv.height)} · stable ${stable.h}\nvisual ${vv ? Math.round(vv.offsetTop) + '+' + Math.round(vv.height) : '–'} · scrollY ${Math.round(scrollY)} · lift ${$('tHost').style.transform || 'none'}\ntouch ${coarse} · motion ${motionOn ? 'on' : 'off'} · permission ${MD.perm}\norientation events ${MD.orient} · motion events ${MD.motion}\nβ ${f(MD.beta)}  γ ${f(MD.gamma)}  screen ${f(screen.orientation?.angle ?? window.orientation)}\nin-screen gravity ${R ? f(R.sx * 10) + ', ' + f(R.sy * 10) + ' · ' + f(R.len * 100) + '%' : '–'}\ntilt ${f(G.target * 180 / Math.PI)}° → ${f(G.angle * 180 / Math.PI)}°`;
   }, 200);
 }
 async function requestMotion() {
