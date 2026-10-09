@@ -5,6 +5,7 @@ import * as S from './shaders.js';
 import { glyphShapes, glyphBody, GlyphSampler, DEPTH, tuftGeometry, stemGeometry, flowerGeometry, leafGeometry, cardGeometry, petalGeometry, mushroomGeometry, bracketGeometry, caterpillarGeometry, barkMap, grassGeometry, bladeGeometry, urchinGeometry, scallopGeometry, anemoneGeometry, starGeometry } from './geometry.js';
 import { RECIPES3D, placeCards } from './recipes.js';
 import { Flock } from './flock.js';
+import { Sea, Bubbles } from './sea.js';
 import { buildAtlas, ofKind } from '../species.js';
 import { mix } from '../brand.js';
 import { rng } from '../film/rand.js';
@@ -68,8 +69,9 @@ export class Garden3D {
     this.blobSource = null; // () => [{u, v, ru, rv, col}] in view fractions, set by the shell
     this.letters = []; this.uid = 1; this.clock0 = performance.now();
     this.petals = new Petals(); this.scene.add(this.petals.mesh); this.petals.uniforms.uGravity = this.U.uGravity;
+    this.bubbles = new Bubbles(); this.scene.add(this.bubbles.mesh); this.bubbles.uniforms.uGravity = this.U.uGravity;
     this.initSpores(); this.initPost();
-    this.flock = new Flock(this);
+    this.flock = new Flock(this); this.sea = new Sea(this); // butterflies, or (Ocean) fish, seahorses and jellyfish
     this.pointer = { inside: false, speed: 0, last: -1, prev: new THREE.Vector3(), presence: 0 };
     this.fit = { s: 1, x: 0, y: 0, ts: 1, tx: 0, ty: 0 };
     this.view = { W: 1, H: 1, box: null };
@@ -85,7 +87,7 @@ export class Garden3D {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
     g.setAttribute('aSeed', new THREE.BufferAttribute(a, 4));
-    this.sporeU = { uTime: this.U.uTime, uPixelRatio: { value: 1 }, uBox: { value: new THREE.Vector3(12, 8, 6) }, uFocus: { value: CAM_Z }, uColor: { value: col('#ffffff') }, uAmount: { value: 0.6 } };
+    this.sporeU = { uTime: this.U.uTime, uPixelRatio: { value: 1 }, uBox: { value: new THREE.Vector3(12, 8, 6) }, uFocus: { value: CAM_Z }, uColor: { value: col('#ffffff') }, uAmount: { value: 0.6 }, uDrift: { value: 1 } };
     this.spores = new THREE.Points(g, new THREE.ShaderMaterial({ vertexShader: S.sporeVert, fragmentShader: S.sporeFrag, uniforms: this.sporeU, transparent: true, depthWrite: false, premultipliedAlpha: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor }));
     this.spores.frustumCulled = false; this.spores.renderOrder = 10;
     this.scene.add(this.spores);
@@ -157,10 +159,13 @@ export class Garden3D {
     const same = (k) => k === 'species' ? String(o[k]) === String(prev[k]) : o[k] === prev[k];
     const cwChanged = o.cw && (!prev.cw || prev.cw.id !== o.cw.id);
     if (cwChanged || !this.U.uAtlas.value) this.U.uAtlas.value = this.atlasTex(this.opts.cw);
-    if (this.opts.cw) this.sporeU.uColor.value = col(this.opts.cw.spore);
+    if (this.opts.cw) this.sporeU.uColor.value = col(RECIPES3D[this.opts.recipe]?.snow?.(this.opts.cw) || this.opts.cw.spore);
+    this.sporeU.uDrift.value = RECIPES3D[this.opts.recipe]?.snow ? -0.6 : 1; // marine snow sinks, pollen rises
     this.U.uHeight.value = RECIPES3D[this.opts.recipe]?.height ?? 1;
     this.U.uSink.value = RECIPES3D[this.opts.recipe]?.buoyant ? -1 : 1; // Ocean: kelp and blades float up
-    this.flock.setCount(RECIPES3D[this.opts.recipe]?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
+    const rec = RECIPES3D[this.opts.recipe];
+    this.flock.setCount(rec?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
+    this.sea.setCount(rec?.sea ? this.opts.butterflies : 0); // Ocean: the same slider counts the sea life
     const rebuild = ['weight', 'density', 'recipe', 'cw', 'species'].some(k => o[k] !== undefined && !same(k));
     if (rebuild && this.letters.length) this.rebuildAll(o.regrow);
   }
@@ -250,14 +255,14 @@ export class Garden3D {
     const t = this.now();
     const l = { ch, id: this.uid++, seed: Math.floor(Math.random() * 1e9), g: null, birth: t };
     if (ch !== ' ') l.g = this.buildGlyph(ch, l.seed, t);
-    this.letters.push(l); this.layout(); this.flock.lastKey = t;
+    this.letters.push(l); this.layout(); this.flock.lastKey = t; this.sea.lastKey = t;
   }
   backspace() {
     const live = this.letters.filter(l => !l.dead), l = live[live.length - 1];
     if (!l) return;
     this.kill(l, false); this.layout();
   }
-  clear() { for (const l of this.letters) if (!l.dead) this.kill(l, true); this.layout(); this.flock.scatter(); }
+  clear() { for (const l of this.letters) if (!l.dead) this.kill(l, true); this.layout(); this.fauna('scatter'); }
   kill(l, fade) {
     const t = this.now(); l.dead = t;
     if (l.g) { l.g.U.uDeath.value = t; l.g.U.uFadeMode.value = fade ? 1 : 0; l.g.U.uDeathDur.value = fade ? 0.9 : 0.45; }
@@ -389,14 +394,14 @@ export class Garden3D {
     this.U.uShake.value = Math.max(this.U.uShake.value, k);
     const t = this.now(); if (t - (this.lastShed || 0) < 0.4) return; this.lastShed = t;
     const v = new THREE.Vector3();
-    for (const l of this.letters) if (l.g && !l.dead) this.burst(l.g.group.getWorldPosition(v), t, Math.round(3 + k * 9));
-    this.flock.scatter();
+    for (const l of this.letters) if (l.g && !l.dead) { this.burst(l.g.group.getWorldPosition(v), t, Math.round(3 + k * 9)); if (RECIPES3D[this.opts.recipe]?.bubbles) this.sandCloud(l, t, k); }
+    this.fauna('scatter');
   }
 
   // ---------- per-frame ----------
   frame() {
     const t = this.now(), dt = Math.min(0.05, t - (this.lastT || t)); this.lastT = t;
-    this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
+    this.U.uTime.value = t; this.petals.uniforms.uTime.value = t; this.bubbles.uniforms.uTime.value = t;
     const G = this.grav, d = Math.atan2(Math.sin(G.target - G.angle), Math.cos(G.target - G.angle)); // shortest way round
     G.angle += d * (1 - Math.exp(-dt * 6));
     this.U.uGravity.value.set(Math.sin(G.angle), -Math.cos(G.angle), 0);
@@ -412,27 +417,31 @@ export class Garden3D {
       pr.presence += ((pr.inside ? 1 : 0) - pr.presence) * Math.min(1, dt * 4);
       this.U.uPointerStrength.value = 0.35 * pr.presence; this.U.uPointerRadius.value = 0.35 * this.root.scale.x;
       this.U.uPulseK.value = this.root.scale.x;
-      this.U.uWind.value = this.opts.wind; this.U.uBreath.value = 0.6;
+      // a current surge (Ocean, click on empty water) swells in fast and dies away over a couple of seconds
+      const sg = this.surge, sk = sg ? Math.exp(-(t - sg.t) * 0.9) * Math.min(1, (t - sg.t) * 5) : 0;
+      this.U.uWind.value = this.opts.wind + sk * 1.8 * (sg?.dir || 0); this.U.uBreath.value = 0.6;
       this.emitPetals(t, dt);
-      this.flock.update(t, dt);
+      this.fauna('update', t, dt);
     }
-    this.petals.uniforms.uWind.value = this.U.uWind.value;
+    this.petals.uniforms.uWind.value = this.bubbles.uniforms.uWind.value = this.U.uWind.value;
+    this.bubbles.uniforms.uRise.value = 0.11 * this.root.scale.x;
     this.render();
   }
   emitPetals(t, dt) {
     const rec = RECIPES3D[this.opts.recipe], cw = this.opts.cw, pr = this.pointer;
     const speed = pr.speed; pr.speed *= Math.exp(-dt * 8);
-    const gl = this.letters.filter(l => l.g && !l.dead && t - l.g.U.uBirth.value > 1.2 && l.g.emit.length);
-    if (!gl.length || !this.opts.petals) return this.petals.flush();
-    const s = this.root.scale.x, size = rec.petals.size * s, cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower] : cw.petals);
+    const gl = this.letters.filter(l => l.g && !l.dead && t - l.g.U.uBirth.value > 1.2 && l.g.emit.length), sys = this.drops(), cfg = rec.bubbles || rec.petals;
+    if (!gl.length || !this.opts.petals) return sys.flush();
+    const s = this.root.scale.x, size = cfg.size * s, cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower] : cw.petals);
     const P = new THREE.Vector3(), Vv = new THREE.Vector3();
-    this.petalAcc = (this.petalAcc || 0) + rec.petals.rate * this.opts.petals * gl.length * dt;
+    this.petalAcc = (this.petalAcc || 0) + cfg.rate * this.opts.petals * gl.length * dt;
     for (let n = 0; this.petalAcc >= 1 && n < 40; n++) {
       this.petalAcc--;
       const l = gl[Math.floor(Math.random() * gl.length)];
       P.copy(l.g.emit[Math.floor(Math.random() * l.g.emit.length)]).applyMatrix4(l.g.group.matrixWorld);
-      Vv.set(0.18 + Math.random() * 0.2, 0.06 + Math.random() * 0.12, (Math.random() - 0.3) * 0.15).multiplyScalar(s);
-      this.petals.emit(P, Vv, col(cols[Math.floor(Math.random() * cols.length)]), size, t);
+      if (rec.bubbles) Vv.set((Math.random() - 0.5) * 0.06, 0.04, 0.05).multiplyScalar(s); // bubbles seep out and rise
+      else Vv.set(0.18 + Math.random() * 0.2, 0.06 + Math.random() * 0.12, (Math.random() - 0.3) * 0.15).multiplyScalar(s);
+      sys.emit(P, Vv, col(cols[Math.floor(Math.random() * cols.length)]), size, t);
     }
     // a fast flick of the pointer near a letter throws petals away from it
     const ptr = this.U.uPointer.value;
@@ -443,16 +452,17 @@ export class Garden3D {
         P.copy(l.g.emit[Math.floor(Math.random() * l.g.emit.length)]).applyMatrix4(l.g.group.matrixWorld);
         if ((P.x - ptr.x) ** 2 + (P.y - ptr.y) ** 2 > R2) continue;
         Vv.set(P.x - ptr.x, P.y - ptr.y, 0.4).normalize().multiplyScalar((0.25 + Math.min(speed, 4) * 0.08) * s);
-        this.petals.emit(P, Vv, col(cols[Math.floor(Math.random() * cols.length)]), size, t);
+        sys.emit(P, Vv, col(cols[Math.floor(Math.random() * cols.length)]), size, t);
       }
     }
-    this.petals.flush();
+    sys.flush();
   }
   puff(pLocal, t) {
     const cw = this.opts.cw, s = this.root.scale.x, P = pLocal.clone().applyMatrix4(this.root.matrixWorld), V = new THREE.Vector3();
     const pc = RECIPES3D[this.opts.recipe].petals.cols?.(cw) || cw.petals;
-    for (let i = 0; i < 5; i++) { V.set((Math.random() - 0.5) * 0.5, Math.random() * 0.3, 0.2).multiplyScalar(s); this.petals.emit(P, V, col(pc[i % pc.length]), RECIPES3D[this.opts.recipe].petals.size * s, t, 2.5); }
-    this.petals.flush();
+    const rec = RECIPES3D[this.opts.recipe], sys = this.drops(), size = (rec.bubbles || rec.petals).size;
+    for (let i = 0; i < 5; i++) { V.set((Math.random() - 0.5) * 0.5, Math.random() * 0.3, 0.2).multiplyScalar(s); sys.emit(P, V, col(pc[i % pc.length]), size * s, t, 2.5); }
+    sys.flush();
   }
 
   // ---------- click: bloom burst ----------
@@ -470,18 +480,35 @@ export class Garden3D {
       if (d < best) { best = d; hitL = l; }
     }
     this.burst(world, t, hitL ? 46 : 26);
-    this.flock.react(rootLocal, t);
+    if (!hitL && RECIPES3D[this.opts.recipe]?.bubbles) this.surge = { t, dir: rootLocal.x < 0 ? 1 : -1 }; // Ocean: empty water → current surge away from the click
+    this.fauna('react', rootLocal, t);
     if (hitL && t - hitL.g.U.uBirth.value > 0.6) this.bloomSpot(hitL, rootLocal.x - hitL.g.group.position.x, rootLocal.y - hitL.g.group.position.y, t);
   }
   burst(world, t, n) {
     const rec = RECIPES3D[this.opts.recipe], cw = this.opts.cw, s = this.root.scale.x;
-    const cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower, cw.flower2] : cw.petals);
+    const cols = rec.petals.cols?.(cw) || (rec.petals.leafy ? [cw.foliage[1], cw.foliage[2], cw.flower, cw.flower2] : cw.petals), sys = this.drops();
     const P = new THREE.Vector3(), V = new THREE.Vector3();
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, sp = 0.35 + Math.random() * 0.9;
       P.set(world.x + Math.cos(a) * 0.06 * s, world.y + Math.sin(a) * 0.06 * s, world.z + 0.05 * s);
       V.set(Math.cos(a) * sp, Math.sin(a) * sp + 0.25, 0.3 + Math.random() * 0.6).multiplyScalar(s);
-      this.petals.emit(P, V, col(cols[i % cols.length]), rec.petals.size * s * (1 + Math.random() * 0.6), t, 2.5 + Math.random() * 2);
+      sys.emit(P, V, col(cols[i % cols.length]), (rec.bubbles || rec.petals).size * s * (1 + Math.random() * 0.6), t, rec.bubbles ? 3 + Math.random() * 3 : 2.5 + Math.random() * 2);
+    }
+    sys.flush();
+  }
+  // petals, or (Ocean) bubbles
+  drops() { return RECIPES3D[this.opts.recipe]?.bubbles ? this.bubbles : this.petals; }
+  // every fauna system gets the same calls; the inactive one has a count of 0
+  fauna(fn, ...a) { this.flock[fn](...a); this.sea[fn](...a); }
+  // shake (Ocean): sand billows off the letter's top ledges and sinks back
+  sandCloud(l, t, k) {
+    const s = this.root.scale.x, cw = this.opts.cw, sand = [mix('#E8D6AC', cw.bg, 0.08), mix('#C8B48A', cw.bg, 0.12), '#F2E6C8'];
+    const o = { pos: new THREE.Vector3(), normal: new THREE.Vector3() }, P = new THREE.Vector3(), V = new THREE.Vector3(), r = Math.random;
+    for (let i = 0, n = Math.round(6 + k * 14); i < n; i++) {
+      for (let j = 0; j < 8; j++) { l.g.sampler.sampleRim(r, o); if (o.normal.y > 0.4) break; }
+      P.copy(o.pos).applyMatrix4(l.g.group.matrixWorld);
+      V.set((r() - 0.5) * 0.5, 0.15 + r() * 0.35, (r() - 0.3) * 0.3).multiplyScalar(s);
+      this.petals.emit(P, V, col(sand[i % 3]), 0.011 * s, t, 2 + r() * 2);
     }
     this.petals.flush();
   }
@@ -529,7 +556,7 @@ export class Garden3D {
     this.U.uFormDur.value = this.opts.formDur;
     this.U.uReveal.value = this.opts.form && this.opts.reveal === 'dissolve' ? 1 : 0;
     this.root.updateMatrixWorld(true);
-    this.flock.sync(this.U.uTime.value);
+    this.fauna('sync', this.U.uTime.value);
     R.setRenderTarget(this.rtA); R.setClearColor(0, 0); R.clear(); R.render(this.scene, this.camera);
     const amt = 7 * this.opts.tilt * (this.dpr || 1) * (tile ? tile.k : 1);
     this.tiltU.uAmount.value = amt;
@@ -562,7 +589,7 @@ export class Garden3D {
     this.mode = 'poster';
     this.view.box = box; this.view.W = W; this.view.H = H;
     for (const l of this.letters) if (l.g) this.disposeGlyph(l.g);
-    this.letters = []; this.petals.clear();
+    this.letters = []; this.petals.clear(); this.bubbles.clear();
     const r = rng(seed * 7919 + 1), txt = (text || '').slice(0, 40) || ' ', n = txt.length;
     const step = motion === 'grow' ? Math.min(0.11, 3 / n) : motion === 'typed' ? Math.min(0.085, 3.6 / n) * 2.2 / speed : 0, off = motion === 'grow' ? 0.2 : motion === 'typed' ? 0.3 : 0;
     let i = 0;
@@ -577,14 +604,14 @@ export class Garden3D {
     this.layout();
     for (const l of this.letters) { l.x = l.tx; l.y = l.ty; if (l.g) l.g.group.position.set(l.x, l.y, 0); }
     this.refit(true); this.root.updateMatrixWorld(true);
-    this.flock.posterPerches(seed);
+    this.fauna('posterPerches', seed);
   }
-  endPoster() { this.mode = 'type'; this.view.box = null; if (this.css) { this.view.W = this.css.W; this.view.H = this.css.H; } this.poster = null; for (const l of this.letters) if (l.g) this.disposeGlyph(l.g); this.letters = []; this.flock.reset(); }
+  endPoster() { this.mode = 'type'; this.view.box = null; if (this.css) { this.view.W = this.css.W; this.view.H = this.css.H; } this.poster = null; for (const l of this.letters) if (l.g) this.disposeGlyph(l.g); this.letters = []; this.fauna('reset'); }
   posterFrame(tMs) {
     const P = this.poster; if (!P) return;
     const T = P.T, tt = (((tMs / 1000) % T) + T) % T, base = 100, u = tt / T;
     const t = base + tt;
-    this.U.uTime.value = t; this.petals.uniforms.uTime.value = t;
+    this.U.uTime.value = t; this.petals.uniforms.uTime.value = t; this.bubbles.uniforms.uTime.value = t;
     this.U.uGravity.value.set(0, -1, 0); this.U.uHang.value = 0; this.U.uShake.value = 0; // posters (and their exports) always hang straight down, still
     const timed = P.motion === 'grow' || P.motion === 'typed' || P.motion === 'scatter';
     for (const l of this.letters) {
@@ -601,9 +628,9 @@ export class Garden3D {
       const lx = (b.x + b.w / 2 + Math.sin(ph) * b.w * 0.4 - this.view.W / 2) * k, ly = -(b.y + b.h / 2 + Math.sin(ph * 2) * b.h * 0.24 - this.view.H / 2) * k;
       this.U.uPointer.value.set(lx, ly, 0); this.U.uPointerStrength.value = -0.5; this.U.uPointerRadius.value = 1.2 * this.root.scale.x;
     } else this.U.uPointerStrength.value = 0;
-    this.petals.uniforms.uWind.value = this.U.uWind.value;
+    this.petals.uniforms.uWind.value = this.bubbles.uniforms.uWind.value = this.U.uWind.value;
     if (this.opts.petals && P.motion !== 'typed') this.emitPetals(t, 1 / 60);
-    this.flock.posterPose(tt, P);
+    this.fauna('posterPose', tt, P);
   }
 }
 

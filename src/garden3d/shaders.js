@@ -443,13 +443,13 @@ void main(){ if(vA<0.5) discard; gl_FragColor=vec4(vCol*vShade,1.0); }`;
 
 // pollen / spores: soft bokeh points rising slowly, defocused away from the focus plane
 export const sporeVert = /* glsl */`
-uniform float uTime; uniform float uPixelRatio; uniform vec3 uBox; uniform float uFocus;
+uniform float uTime; uniform float uPixelRatio; uniform vec3 uBox; uniform float uFocus; uniform float uDrift; // 1 rises (pollen), -1 sinks (marine snow)
 attribute vec4 aSeed;
 varying float vAlpha; varying float vBlur;
 void main(){
   float t=uTime; vec3 p=(aSeed.xyz-0.5)*uBox;
   float speed=0.05+aSeed.w*0.08;
-  p.y=mod(p.y+uBox.y*0.5+t*speed,uBox.y)-uBox.y*0.5;
+  p.y=mod(p.y+uBox.y*0.5+t*speed*uDrift,uBox.y)-uBox.y*0.5;
   p.x+=sin(t*0.4+aSeed.w*30.0)*0.15; p.z+=cos(t*0.3+aSeed.y*20.0)*0.1;
   vec4 mv=viewMatrix*vec4(p,1.0);
   gl_Position=projectionMatrix*mv;
@@ -621,4 +621,90 @@ void main(){ ${DISSOLVE}
   vec2 q=vP*16.0, f=fract(q)-0.5; float bump=(1.0-smoothstep(0.12,0.28,length(f)))*step(0.4,sh(floor(q)));
   col=mix(col,vC,bump*0.8);
   gl_FragColor=vec4(col*(0.45+0.8*vLight)*(1.0-0.25*smoothstep(0.85,1.0,vR)),1.0);
+}`;
+
+// ---- Ocean swimmers (sea.js): fish and seahorses share one shader; local +z is forward, +y up ----
+// aZ runs 0 (tail tip) → 1 (nose); the tail wags in a wave that travels back along the body
+export const fishVert = /* glsl */`
+uniform float uTime;
+attribute float aZ;
+attribute vec3 iColA; attribute vec3 iColB; attribute vec4 iSwim; // x phase, y beat rate (0 = still), z stripe count, w seed
+varying vec3 vN; varying vec3 vL; varying vec3 vA; varying vec3 vB; varying float vZ; varying float vStripes;
+void main(){
+  vec3 p=position;
+  p.x+=sin(uTime*iSwim.y+iSwim.x-aZ*4.5)*pow(1.0-aZ,1.6)*0.2*step(0.01,iSwim.y);
+  gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(p,1.0);
+  vN=normalize(mat3(modelMatrix)*mat3(instanceMatrix)*normal);
+  vL=position; vA=iColA; vB=iColB; vZ=aZ; vStripes=iSwim.z;
+}`;
+export const fishFrag = /* glsl */`
+uniform vec3 uLightDir; uniform vec4 uEye; // eye centre (x mirrored) + radius, in local space
+varying vec3 vN; varying vec3 vL; varying vec3 vA; varying vec3 vB; varying float vZ; varying float vStripes;
+void main(){
+  vec3 n=normalize(vN); if(!gl_FrontFacing) n=-n;
+  vec3 col=mix(vA,vB,smoothstep(-0.08,0.12,vL.y)); // pale belly, coloured back
+  if(vStripes>0.5) col=mix(col,vec3(1.0),(1.0-smoothstep(0.03,0.06,abs(fract(vZ*vStripes)-0.5)-0.32))*0.9);
+  float eye=length(vec3(abs(vL.x),vL.y,vL.z)-uEye.xyz);
+  col=mix(col,vec3(1.0),1.0-smoothstep(uEye.w,uEye.w*1.15,eye));
+  col=mix(col,vec3(0.02),1.0-smoothstep(uEye.w*0.55,uEye.w*0.7,eye));
+  float L=clamp((dot(n,uLightDir)+0.5)/1.5,0.0,1.0), rim=pow(1.0-abs(n.z),3.0);
+  gl_FragColor=vec4(col*(0.4+0.8*L)+vB*rim*0.15,1.0);
+}`;
+
+// jellyfish: a translucent bell that pulses (aV 0 apex → 1 rim) trailing waving tentacles (aT 0 rim → 1 tip)
+export const jellyVert = /* glsl */`
+uniform float uTime;
+attribute float aV; attribute float aT; attribute float aK; // aK: 0 bell, 1 tentacle
+attribute vec3 iCol; attribute vec4 iSwim; // x phase, y pulse rate
+varying float vV; varying float vT; varying float vK; varying vec3 vCol; varying vec3 vN;
+void main(){
+  float ph=uTime*iSwim.y+iSwim.x, k=sin(ph);
+  vec3 p=position;
+  if(aK<0.5){ p.xz*=1.0-0.16*max(k,0.0)*aV; p.y*=1.0+0.08*k; }
+  else {
+    float w=aT;
+    p.x+=sin(uTime*1.6-aT*5.0+iSwim.x+p.z*9.0)*0.09*w;
+    p.z+=cos(uTime*1.3-aT*4.0+iSwim.x*2.0+p.x*9.0)*0.06*w;
+    p.xz*=1.0-0.12*max(k,0.0)*(1.0-aT);
+  }
+  gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(p,1.0);
+  vN=normalize(mat3(modelMatrix)*mat3(instanceMatrix)*normal);
+  vV=aV; vT=aT; vK=aK; vCol=iCol;
+}`;
+export const jellyFrag = /* glsl */`
+varying float vV; varying float vT; varying float vK; varying vec3 vCol; varying vec3 vN;
+void main(){
+  float a;
+  if(vK<0.5){ float edge=pow(1.0-abs(normalize(vN).z),2.0); a=0.16+0.45*pow(vV,4.0)+0.35*edge; }
+  else a=0.55*(1.0-vT);
+  vec3 c=mix(vCol,vec3(1.0),0.35*(1.0-vT)*vK+0.3*pow(vV,4.0));
+  gl_FragColor=vec4(c*a,a);
+}`;
+
+// bubbles: camera-facing discs that rise against gravity at a steady speed after the emit push dies
+// away in the water, wobbling and swelling a little; a bright rim and a highlight, almost clear inside
+export const bubbleVert = /* glsl */`
+uniform float uTime; uniform float uWind; uniform vec3 uGravity; uniform float uRise;
+attribute vec3 iSpawn; attribute vec3 iVel; attribute vec4 iLife; attribute vec3 iCol; // life: x birth, y duration, z size, w seed
+varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main(){
+  float age=uTime-iLife.x, life=iLife.y, t=clamp(age/life,0.0,1.0), seed=iLife.w;
+  float alive=step(0.0,age)*step(age,life);
+  vec3 p=iSpawn+iVel*(1.0-exp(-age*2.5))/2.5;
+  p-=uGravity*uRise*(0.75+seed*0.5)*age;
+  p.x+=uWind*uRise*0.4*age;
+  p+=vec3(sin(age*5.0+seed*40.0),0.0,cos(age*4.0+seed*20.0))*uRise*0.15*min(age,1.0);
+  float s=iLife.z*(0.75+0.25*smoothstep(0.0,0.1,t))*(1.0+0.3*t)*alive;
+  vec4 mv=viewMatrix*vec4(p,1.0); mv.xy+=position.xy*s;
+  gl_Position=projectionMatrix*mv;
+  vUv=position.xy; vCol=iCol; vA=alive*(1.0-smoothstep(0.9,1.0,t));
+}`;
+export const bubbleFrag = /* glsl */`
+varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main(){
+  float d=length(vUv)*2.0; if(vA<=0.0 || d>1.0) discard;
+  float rim=smoothstep(0.62,0.92,d)*(1.0-smoothstep(0.92,1.0,d));
+  float hl=1.0-smoothstep(0.0,0.2,length(vUv-vec2(-0.16,0.16)));
+  float a=(0.07+rim*0.7+hl*0.85)*vA;
+  gl_FragColor=vec4(vCol*a,a);
 }`;
