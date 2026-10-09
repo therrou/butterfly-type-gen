@@ -94,7 +94,8 @@ export class Sea {
     this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.s = new THREE.Vector3(); this.X = new THREE.Vector3(); this.Y = new THREE.Vector3(); this.Z = new THREE.Vector3();
     this.poses = null;
   }
-  setCount(n) { this.want = Math.max(0, Math.min(12, n | 0)); }
+  // 0 when the recipe isn't Ocean: the sea life goes at once rather than swimming off into another garden
+  setCount(n) { this.want = Math.max(0, Math.min(12, n | 0)); if (!this.want) this.reset(); }
   // "Sea life" n → fish schools, seahorses and jellyfish
   quota() { const n = this.want; return { schools: n ? Math.ceil(n / 2.5) : 0, horses: Math.round(n / 4), jellies: Math.round(n / 4) }; }
   reset() { this.schools = []; this.seahorses = []; this.jellys = []; this.poses = null; }

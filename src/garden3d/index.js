@@ -164,6 +164,7 @@ export class Garden3D {
     this.U.uHeight.value = RECIPES3D[this.opts.recipe]?.height ?? 1;
     this.U.uSink.value = RECIPES3D[this.opts.recipe]?.buoyant ? -1 : 1; // Ocean: kelp and blades float up
     const rec = RECIPES3D[this.opts.recipe];
+    if (o.recipe !== undefined && !same('recipe')) { const off = rec?.bubbles ? this.petals : this.bubbles; off.clear(); off.flush(); } // bubbles only in Ocean, petals/leaves only elsewhere
     this.flock.setCount(rec?.butterflies === false ? 0 : this.opts.butterflies); // Timber has caterpillars instead
     this.sea.setCount(rec?.sea ? this.opts.butterflies : 0); // Ocean: the same slider counts the sea life
     const rebuild = ['weight', 'density', 'recipe', 'cw', 'species'].some(k => o[k] !== undefined && !same(k));
