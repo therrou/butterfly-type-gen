@@ -21,7 +21,7 @@ export const COLOURWAYS = [
     flower: T.lilac, flower2: T.pinkSoft, flowerDeep: T.violet, line: T.white, stem: T.pink,
     foliage: [GREENS.deep, GREENS.moss, GREENS.fresh], petals: [T.lilac, T.pink, T.white], spore: T.lilac, lockup: 'white' },
   { id: 'glass', name: 'Glass', bg: T.lasting, blobs: [T.aqua, T.lilac, T.panel, T.indigo], type: T.white,
-    flower: T.white, flower2: T.aqua, flowerDeep: T.cyan, line: T.lasting, stem: T.white,
+    flower: T.white, flower2: T.aqua, flowerDeep: T.cyan, line: T.lasting, stem: T.lilac,
     foliage: [GREENS.moss, GREENS.fresh, GREENS.tip], petals: [T.white, T.aqua, T.lilac], spore: T.aqua, lockup: 'white' },
   { id: 'fern', name: 'Fern', bg: T.lasting, blobs: [T.indigo, GREENS.moss, T.cyan, T.violet], type: T.white,
     flower: T.pinkSoft, flower2: T.white, flowerDeep: T.pink, line: T.lasting, stem: GREENS.fresh,
