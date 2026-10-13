@@ -12,7 +12,8 @@ for (const w of ['Light', 'Regular', 'Medium', 'Bold']) {
   console.log('font', w);
 }
 copyFileSync(new URL('OFL.txt', SRC), new URL('OFL.txt', OUT));
-for (const f of ['novo-lockup-tagline-white.png', 'novo-lockup-tagline.png'])
-  copyFileSync(new URL(f, SRC), new URL(`../public/img/${f}`, import.meta.url));
+// [novo] lockup images
+// for (const f of ['novo-lockup-tagline-white.png', 'novo-lockup-tagline.png'])
+//   copyFileSync(new URL(f, SRC), new URL(`../public/img/${f}`, import.meta.url));
 for (const f of ['wings-pair.png', 'glass-butterfly.png'])
   copyFileSync(new URL(`../../app/assets/${f}`, import.meta.url), new URL(`../public/img/${f}`, import.meta.url));

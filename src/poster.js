@@ -1,5 +1,6 @@
 // Poster grammar (from refs/brand + out/poster.png): headline top-left in Novo, the flora type art as
-// hero in the middle band, novonordisk.com bottom-left, lockup bottom-right. Design space is
+// hero in the middle band. Design space is
+// [novo] URL bottom-left + lockup bottom-right are commented out below; uncomment to restore.
 // 1000 × 1414.21 units (A-series ratio); print sizes only change the resolution.
 import { drawBg, bgSVG, applyGrain } from './background.js';
 import { textPathData } from './fonts.js';
@@ -13,8 +14,10 @@ const M = 64;
 const IMG = {};
 export async function loadPosterImages() {
   const load = async (k, src, crop) => { const i = new Image(); i.src = src; await i.decode(); IMG[k] = { img: i, crop: crop || [0, 0, i.width, i.height] }; };
-  await Promise.all([load('white', '/img/novo-lockup-tagline-white.png'), load('blue', '/img/novo-lockup-tagline.png', [250, 812, 1900, 786])]);
-  for (const k of ['white', 'blue']) { const { img, crop } = IMG[k], c = document.createElement('canvas'); c.width = crop[2]; c.height = crop[3]; c.getContext('2d').drawImage(img, -crop[0], -crop[1]); IMG[k].url = c.toDataURL(); IMG[k].canvas = c; }
+  // [novo] lockup images
+  // await Promise.all([load('white', '/img/novo-lockup-tagline-white.png'), load('blue', '/img/novo-lockup-tagline.png', [250, 812, 1900, 786])]);
+  void load;
+  for (const k of Object.keys(IMG)) { const { img, crop } = IMG[k], c = document.createElement('canvas'); c.width = crop[2]; c.height = crop[3]; c.getContext('2d').drawImage(img, -crop[0], -crop[1]); IMG[k].url = c.toDataURL(); IMG[k].canvas = c; } // [novo] was: of ['white', 'blue']
 }
 
 const mctx = document.createElement('canvas').getContext('2d');
@@ -39,7 +42,7 @@ export function layout(p) {
   return {
     head: { lines: head, x: M, y: headY, size: hs, lh: hs * 1.06 },
     sub: { lines: sub, x: M, y: subY, size: ss, lh: ss * 1.3 },
-    url: { text: 'novonordisk.com', x: M, y: PH - M - 4, size: 22 },
+    // [novo] url: { text: 'novonordisk.com', x: M, y: PH - M - 4, size: 22 },
     lockup: { x: PW - M - lw, y: PH - M - lh + 6, w: lw, h: lh },
     box: { x: M * 0.5, y: cy - h / 2, w: PW - M, h, scale: p.artScale },
   };
@@ -50,17 +53,18 @@ export function drawOverlay(ctx, L, cw) {
   ctx.fillStyle = cw.type; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   ctx.font = `400 ${L.head.size}px Novo`; L.head.lines.forEach((t, i) => ctx.fillText(t, L.head.x, L.head.y + i * L.head.lh));
   ctx.globalAlpha = 0.88; ctx.font = `400 ${L.sub.size}px Novo`; L.sub.lines.forEach((t, i) => ctx.fillText(t, L.sub.x, L.sub.y + i * L.sub.lh));
-  ctx.globalAlpha = 1; ctx.font = `500 ${L.url.size}px Novo`; ctx.fillText(L.url.text, L.url.x, L.url.y);
-  const lk = IMG[cw.lockup === 'blue' ? 'blue' : 'white'];
-  if (lk) ctx.drawImage(lk.canvas, L.lockup.x, L.lockup.y, L.lockup.w, L.lockup.h);
+  ctx.globalAlpha = 1;
+  // [novo] ctx.font = `500 ${L.url.size}px Novo`; ctx.fillText(L.url.text, L.url.x, L.url.y);
+  // [novo] const lk = IMG[cw.lockup === 'blue' ? 'blue' : 'white'];
+  // [novo] if (lk) ctx.drawImage(lk.canvas, L.lockup.x, L.lockup.y, L.lockup.w, L.lockup.h);
 }
 function overlaySVG(L, cw) {
   const p = [];
   L.head.lines.forEach((t, i) => p.push(`<path d="${textPathData(t, L.head.x, L.head.y + i * L.head.lh, L.head.size, 400)}" fill="${cw.type}"/>`));
   L.sub.lines.forEach((t, i) => p.push(`<path d="${textPathData(t, L.sub.x, L.sub.y + i * L.sub.lh, L.sub.size, 400)}" fill="${cw.type}" opacity="0.88"/>`));
-  p.push(`<path d="${textPathData(L.url.text, L.url.x, L.url.y, L.url.size, 500)}" fill="${cw.type}"/>`);
-  const lk = IMG[cw.lockup === 'blue' ? 'blue' : 'white'];
-  if (lk) p.push(`<image href="${lk.url}" x="${L.lockup.x}" y="${L.lockup.y}" width="${L.lockup.w}" height="${L.lockup.h}"/>`);
+  // [novo] p.push(`<path d="${textPathData(L.url.text, L.url.x, L.url.y, L.url.size, 500)}" fill="${cw.type}"/>`);
+  // [novo] const lk = IMG[cw.lockup === 'blue' ? 'blue' : 'white'];
+  // [novo] if (lk) p.push(`<image href="${lk.url}" x="${L.lockup.x}" y="${L.lockup.y}" width="${L.lockup.w}" height="${L.lockup.h}"/>`);
   return p.join('');
 }
 

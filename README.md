@@ -23,11 +23,8 @@ npm run dev     # http://localhost:5178
 - **Poster editor**: words, headline/subline, 7 preview motions (default **Typed**: the words type out, then a glass butterfly drops by; *Typing speed* 0.4–3×, the loop length follows) + frame scrubber (pause on the frame you want printed), colourway cards, gradient-blob background (open *Background* to drag blobs), A4/A3/A2 + 3 mm bleed, export.
 - **Export**: PNG at 300 dpi (tiled, so A2 works; 3D tiles reuse the preview's tilt-shift in full-image space) · SVG (2D engine, everything outlined).
 
-## Password gate & Vercel deploy
-The whole site sits behind a password pop-up (`auth/gate.js`), enforced on the server by Vercel Routing Middleware (`middleware.js`), so nothing (app, assets, brand images) is served without it. The password is never sent to the browser.
-- **Env vars** (Vercel → Project → Settings → Environment Variables): `SITE_PASSWORD` (required; without it the deployment answers 503 instead of opening up) and optional `AUTH_SECRET` (rotate it to sign everyone out without changing the password).
-- **Cookie**: `bt_auth`, HttpOnly, Secure, SameSite=Lax, 30 days; an HMAC of the password, so changing `SITE_PASSWORD` invalidates every session. Sign out: visit `/__logout`.
-- **Local**: copy `.env.example` → `.env.local` and set `SITE_PASSWORD`; `npm run dev` / `npm run preview` then run the same gate. Without it, local dev stays open.
+## Vercel deploy
+No password gate: the site is public.
 - **Vercel project settings**: Root Directory `butterfly-type`, framework preset Vite (build `npm run build`, output `dist`). The project is self-contained: the film's butterfly modules are copied into `src/film/` (keep them in sync with `../src` if the butterfly look changes). Commit `public/` (fonts, species, images produced by `npm run setup`) so the build doesn't need the setup step.
 
 ## Code
@@ -42,7 +39,7 @@ The whole site sits behind a password pop-up (`auth/gate.js`), enforced on the s
 | `src/brand.js` | Novo tokens + colourways (Paper is flagged pending: dark type on light) |
 
 ## Assets & licences
-- Novo fonts: SIL OFL (`public/fonts/OFL.txt`). Lockups + glass butterflies: brand assets, internal use only.
+- Novo fonts: SIL OFL (`public/fonts/OFL.txt`). Glass butterflies: brand assets, internal use only. (Novo lockup is commented out in `src/poster.js` — search `[novo]`.)
 - Species: Microsoft Fluent Emoji Flat (MIT) and game-icons.net (CC BY 3.0, credit Lorc, Delapouite et al.). Sea species neither library has (seahorse, seastar, urchin, anemone, kelp, sea grass, scallop) are drawn in code by `scripts/draw-sea.mjs` into `public/species/drawn/`; an illustrator can swap any of them (plain filled `<path>`s, 32×32 viewBox). See `public/species/LICENSES.md`.
 - Growth mechanics after Type Garden by Akshat Agarwal; 3D techniques after the example-1 generator.
 
