@@ -197,7 +197,8 @@
   "name": "coral",
   "kind": "bloom",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "f:spiral-shell",
@@ -205,7 +206,8 @@
   "name": "spiral-shell",
   "kind": "bloom",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "f:tropical-fish",
@@ -213,7 +215,8 @@
   "name": "tropical-fish",
   "kind": "critter",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "f:fish",
@@ -221,7 +224,8 @@
   "name": "fish",
   "kind": "critter",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "f:blowfish",
@@ -229,7 +233,8 @@
   "name": "blowfish",
   "kind": "critter",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "f:jellyfish",
@@ -237,7 +242,8 @@
   "name": "jellyfish",
   "kind": "critter",
   "style": "flat",
-  "license": "MIT · Microsoft Fluent Emoji"
+  "license": "MIT · Microsoft Fluent Emoji",
+  "sea": true
  },
  {
   "id": "g:daisy",
@@ -405,7 +411,8 @@
   "name": "coral",
   "kind": "bloom",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:scallop",
@@ -413,7 +420,8 @@
   "name": "scallop",
   "kind": "bloom",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:spiral-shell",
@@ -421,7 +429,8 @@
   "name": "spiral-shell",
   "kind": "bloom",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:nautilus-shell",
@@ -429,7 +438,8 @@
   "name": "nautilus-shell",
   "kind": "bloom",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:seahorse",
@@ -437,7 +447,8 @@
   "name": "seahorse",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:sea-star",
@@ -445,7 +456,8 @@
   "name": "sea-star",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:sea-urchin",
@@ -453,7 +465,8 @@
   "name": "sea-urchin",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:jellyfish",
@@ -461,7 +474,8 @@
   "name": "jellyfish",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:tropical-fish",
@@ -469,7 +483,8 @@
   "name": "tropical-fish",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "g:clownfish",
@@ -477,7 +492,8 @@
   "name": "clownfish",
   "kind": "critter",
   "style": "silhouette",
-  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)"
+  "license": "CC BY 3.0 · game-icons.net (Lorc, Delapouite et al.)",
+  "sea": true
  },
  {
   "id": "d:anemone",
@@ -485,7 +501,8 @@
   "name": "anemone",
   "kind": "bloom",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:scallop",
@@ -493,7 +510,8 @@
   "name": "scallop",
   "kind": "bloom",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:anemone-silhouette",
@@ -501,7 +519,8 @@
   "name": "anemone-silhouette",
   "kind": "bloom",
   "style": "silhouette",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:kelp",
@@ -509,7 +528,8 @@
   "name": "kelp",
   "kind": "leaf",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:sea-grass",
@@ -517,7 +537,8 @@
   "name": "sea-grass",
   "kind": "leaf",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:kelp-silhouette",
@@ -525,7 +546,8 @@
   "name": "kelp-silhouette",
   "kind": "leaf",
   "style": "silhouette",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:sea-grass-silhouette",
@@ -533,7 +555,8 @@
   "name": "sea-grass-silhouette",
   "kind": "leaf",
   "style": "silhouette",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:seahorse",
@@ -541,7 +564,8 @@
   "name": "seahorse",
   "kind": "critter",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:seastar",
@@ -549,7 +573,8 @@
   "name": "seastar",
   "kind": "critter",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  },
  {
   "id": "d:sea-urchin",
@@ -557,6 +582,7 @@
   "name": "sea-urchin",
   "kind": "critter",
   "style": "flat",
-  "license": "Butterfly Type · in-house, swappable"
+  "license": "Butterfly Type · in-house, swappable",
+  "sea": true
  }
 ]

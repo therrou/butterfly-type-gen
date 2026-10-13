@@ -59,6 +59,7 @@ export function fills(sp, cw, tint = 0.85) {
     const [h, s, l] = hsl(src);
     let target;
     if (s > 0.2 && h >= 65 && h <= 170) target = cw.foliage[l < 0.35 ? 0 : l < 0.6 ? 1 : 2];      // natural accent greens
+    else if (s < 0.12 && l > 0.8 && sp.kind === 'bloom') target = mix(T.white, cw.flower, 0.55);     // white petals take a pastel of the bloom colour
     else if (s < 0.12) target = l > 0.8 ? T.white : l < 0.3 ? T.deep : mix(T.deep, T.white, l);        // neutrals stay neutral
     else if (h >= 25 && h < 65 && sp.kind !== 'bloom') target = cw.flower2;                           // warm insect/leaf details
     else target = l < 0.42 ? cw.flowerDeep : l < 0.72 ? cw.flower : cw.flower2;                       // everything else → bloom ramp

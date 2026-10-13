@@ -30,17 +30,17 @@ const manifest = [];
 for (const [set, kinds] of Object.entries(LIB)) {
   mkdirSync(new URL(`${set}/`, out), { recursive: true });
   for (const [k, names] of Object.entries(kinds)) {
-    const kind = k.trim(); // a trailing space keeps a second group of the same kind
+    const kind = k.trim(), sea = k !== kind; // the trailing-space groups are the sea species
     for (const name of names) {
       const res = await fetch(`https://api.iconify.design/${set}/${name}.svg`);
       if (!res.ok) { console.warn('skip', set, name, res.status); continue; }
       writeFileSync(new URL(`${set}/${name}.svg`, out), await res.text());
-      manifest.push({ id: `${set === 'game-icons' ? 'g' : 'f'}:${name}`, set, name, kind, style: set === 'game-icons' ? 'silhouette' : 'flat', license: LICENSE[set] });
+      manifest.push({ id: `${set === 'game-icons' ? 'g' : 'f'}:${name}`, set, name, kind, style: set === 'game-icons' ? 'silhouette' : 'flat', license: LICENSE[set], ...(sea && { sea: true }) });
       console.log(set, kind, name);
     }
   }
 }
 for (const [kind, names] of Object.entries(DRAWN)) for (const name of names)
-  manifest.push({ id: `d:${name}`, set: 'drawn', name, kind, style: name.endsWith('-silhouette') ? 'silhouette' : 'flat', license: LICENSE.drawn });
+  manifest.push({ id: `d:${name}`, set: 'drawn', name, kind, style: name.endsWith('-silhouette') ? 'silhouette' : 'flat', license: LICENSE.drawn, sea: true });
 writeFileSync(new URL('manifest.json', out), JSON.stringify(manifest, null, 1));
 writeFileSync(new URL('LICENSES.md', out), `# Species art licences\n\n- fluent-emoji-flat/: Microsoft Fluent Emoji, MIT — https://github.com/microsoft/fluentui-emoji\n- game-icons/: game-icons.net, CC BY 3.0 — https://game-icons.net (credit Lorc, Delapouite and contributors)\n- drawn/: sea species drawn in code for Butterfly Type (scripts/draw-sea.mjs), swappable for illustrations\n`);

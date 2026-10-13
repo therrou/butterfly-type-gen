@@ -20,9 +20,10 @@ export const COLOURWAYS = [
   { id: 'lilac', name: 'Lilac', bg: T.deep, blobs: [T.violet, T.lilac, T.pink, T.indigo], type: T.white,
     flower: T.lilac, flower2: T.pinkSoft, flowerDeep: T.violet, line: T.white, stem: T.pink,
     foliage: [GREENS.deep, GREENS.moss, GREENS.fresh], petals: [T.lilac, T.pink, T.white], spore: T.lilac, lockup: 'white' },
-  { id: 'glass', name: 'Glass', bg: T.lasting, blobs: [T.aqua, T.lilac, T.panel, T.indigo], type: T.white,
-    flower: T.white, flower2: T.aqua, flowerDeep: T.cyan, line: T.lasting, stem: T.lilac,
-    foliage: [GREENS.moss, GREENS.fresh, GREENS.tip], petals: [T.white, T.aqua, T.lilac], spore: T.aqua, lockup: 'white' },
+  // iridescent, like light through a glasswing: aqua blooms shifting to lilac and pink, violet hearts
+  { id: 'glass', name: 'Glass', bg: T.lasting, blobs: [T.aqua, T.violet, T.pinkSoft, T.indigo], type: T.white,
+    flower: T.aqua, flower2: T.lilac, flowerDeep: T.violet, line: T.lasting, stem: T.lilac,
+    foliage: [GREENS.deep, GREENS.moss, GREENS.tip], petals: [T.aqua, T.lilac, T.pinkSoft, T.cyan], spore: T.aqua, lockup: 'white' },
   { id: 'fern', name: 'Fern', bg: T.lasting, blobs: [T.indigo, GREENS.moss, T.cyan, T.violet], type: T.white,
     flower: T.pinkSoft, flower2: T.white, flowerDeep: T.pink, line: T.lasting, stem: GREENS.fresh,
     foliage: [GREENS.deep, GREENS.moss, GREENS.tip], petals: [T.pinkSoft, T.white, GREENS.tip], spore: GREENS.tip, lockup: 'white' },

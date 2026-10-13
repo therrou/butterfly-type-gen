@@ -47,7 +47,9 @@ const $ = id => document.getElementById(id);
 const g2 = new Garden2D(), g3 = new Garden3D();
 const c2 = document.createElement('canvas'), x2 = c2.getContext('2d');
 const eng = () => (S.engine === '3d' ? g3 : g2);
-const selected = () => { const r = S.recipe[S.engine]; return S.species[r] || defaultSelection(S.engine, r); };
+// sea species only grow in sea recipes and land species only on land (also cleans selections saved before the split)
+const habitatOK = id => { const sp = getSpecies(id); return !sp || !!sp.sea === !!recipeDef(S.engine, S.recipe[S.engine]).sea; };
+const selected = () => { const r = S.recipe[S.engine]; return (S.species[r] || defaultSelection(S.engine, r)).filter(habitatOK); };
 const defaultSelection = (e, r) => { const d = recipeDef(e, r).def; return [...d.bloom, ...d.leaf, ...d.critter]; };
 const liveText = () => (S.engine === '3d' ? g3.text() : g2.letters.filter(l => !l.dead).map(l => l.ch).join('')) || S.text;
 
@@ -458,7 +460,7 @@ function relayout() { clearTimeout(rl); rl = setTimeout(() => { buildPoster(); s
 // ---------- catalogue ----------
 // the hand-drawn rose (2D only) is offered as a catalogue item next to the downloaded species
 function catalogueItems() {
-  const items = species().map(sp => ({ id: sp.id, kind: sp.kind, name: sp.name.replace(/-/g, ' '), sp }));
+  const items = species().filter(sp => habitatOK(sp.id)).map(sp => ({ id: sp.id, kind: sp.kind, name: sp.name.replace(/-/g, ' '), sp }));
   if (S.engine === '2d') items.unshift({ id: ROSE, kind: 'bloom', name: recipeDef('2d', S.recipe['2d']).sea ? 'drawn anemones & coral' : 'hand-drawn rose', sp: null });
   return items;
 }
